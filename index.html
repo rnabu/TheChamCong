@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OT Tracker 24/7</title>
+    <title>Thẻ chấm công online</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
@@ -67,7 +67,7 @@
     <div id="main-screen" class="hidden">
         
         <div class="table-section">
-            <h2 id="welcome-text" style="margin:10px 0 0 15px;">Xin chao</h2>
+            <h2 id="welcome-text" style="margin:10px 0 0 15px;">Xin chào bạn !</h2>
             <h4 id="table-title">Tháng 02/2026</h4>
             <table>
                 <thead>
@@ -93,7 +93,7 @@
             </div>
 
             <div class="action-row">
-                <button class="btn-finish" onclick="saveWork()">KẾT THÚC GIỜ LÀM</button>
+                <button class="btn-finish" onclick="saveWork()">CHẤM CÔNG NGAY</button>
                 <div class="nav-group">
                     <button class="btn-nav" onclick="changeMonth(-1)">◀</button>
                     <button class="btn-nav" onclick="changeMonth(1)">▶</button>
@@ -106,7 +106,7 @@
 
     <div id="manual-screen" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:100;">
         <div class="auth-card">
-            <h3>Thêm / Sửa ngày làm</h3>
+            <h3>Thêm / Sửa ngày giờ công</h3>
 
             <label>Ngày:</label>
             <input type="date" id="manual-date">
@@ -124,14 +124,14 @@
     <div id="settings-screen" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100;">
         <div class="auth-card" style="width: 280px;">
             <h3>Cài đặt thông số</h3>
-            <label>Số giờ OT mục tiêu (h):</label>
+            <label>Số tiếng muốn tăng ca trong 1 tháng:</label>
             <input type="number" id="set-goal" placeholder="Ví dụ: 40">
-            <label>Số tiền/giờ (JPY):</label>
+            <label>Lương 1 giờ tăng ca:</label>
             <input type="number" id="set-rate" placeholder="Ví dụ: 1500">
             <label>Tên hiển thị:</label>
             <input type="text" id="set-name" placeholder="Tên của bạn">
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button onclick="logout()" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px;">Logout</button>
+                <button onclick="logout()" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px;">Đăng xuất</button>
                 <button onclick="saveSettings()" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px;">Lưu</button>
                 <button onclick="closeSettings()" style="flex: 1; background: #ccc; border: none;">Đóng</button>
             </div>
@@ -165,7 +165,7 @@
             const password = document.getElementById('password').value;
 
             if (!email || !password) {
-                alert("Nhập đủ email và mật khẩu!");
+                alert("Nhập đầy đủ email và mật khẩu!");
                 return;
             }
 
@@ -235,7 +235,7 @@
 
         // 3. LƯU THỜI GIAN
         async function saveWork() {
-            if(!confirm("Lưu giờ kết thúc hôm nay?")) return;
+            if(!confirm("Có chắc là muốn chấm công ngay?")) return;
 
             const now = new Date();
             const y = now.getFullYear();
@@ -255,7 +255,7 @@
         }
 
         async function saveOT() {
-            if(!confirm("Có muốn lưu thời gian kết thúc giờ làm cho ngày hôm nay?")) return;
+            if(!confirm("Có muốn chấm công cho ngày hôm nay?")) return;
         
             const now = new Date();
             const year = now.getFullYear();
@@ -278,7 +278,7 @@
                     time: timeStr,
                     timestamp: now.getTime()
                 });
-                alert("Đã cập nhật giờ về: " + timeStr);
+                alert("Đã cập nhật giờ chấm công: " + timeStr);
             } else {
                 // Chưa có → tạo mới record
                 await ref.set({
@@ -429,7 +429,7 @@
                         <td onclick="${left ? `openAddManual('${left.dateId}','${left.time}')` : ''}">
                             ${left ? left.date : ''}
                         </td>
-                        <td style="color:blue;font-weight:bold"
+                        <td style="color:black;font-weight:normal"
                             onclick="${left ? `openAddManual('${left.dateId}','${left.time}')` : ''}">
                             ${left ? left.time : ''}
                         </td>
@@ -437,7 +437,7 @@
                         <td onclick="${right ? `openAddManual('${right.dateId}','${right.time}')` : ''}">
                             ${right ? right.date : ''}
                         </td>
-                        <td style="color:blue;font-weight:bold"
+                        <td style="color:black;font-weight:normal"
                             onclick="${right ? `openAddManual('${right.dateId}','${right.time}')` : ''}">
                             ${right ? right.time : ''}
                         </td>
@@ -518,3 +518,4 @@
 </body>
 
 </html>
+
