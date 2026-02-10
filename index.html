@@ -140,20 +140,20 @@
         function loginSuccess(user, data) {
             currentUser = { id: user, ...data };
         
+            // Lưu session
+            localStorage.setItem('ot_user', JSON.stringify(currentUser));
+        
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-screen').classList.remove('hidden');
         
-            // Hủy listener cũ nếu có (tránh bị nhân đôi khi login lại)
-            if (logsRef) {
-                logsRef.off();
-            }
+            // Hủy listener cũ nếu có
+            if (logsRef) logsRef.off();
         
-            // Tạo listener DUY NHẤT
+            // Tạo listener realtime
             logsRef = db.ref('logs/' + currentUser.id);
-        
             logsRef.on('value', snapshot => {
                 allLogs = snapshot.val() || {};
-                renderTable(); // mỗi lần data đổi → vẽ lại bảng
+                renderTable();
             });
         }
 
@@ -322,10 +322,20 @@
         }
 
 
+        
+        window.onload = function () {
+        const savedUser = localStorage.getItem('ot_user');
+    
+        if (savedUser) {
+            const userData = JSON.parse(savedUser);
+            loginSuccess(userData.id, userData);
+        }
+    };
     </script>
 </body>
 
 </html>
+
 
 
 
