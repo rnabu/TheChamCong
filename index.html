@@ -83,6 +83,20 @@
         </div>
     </div>
 
+    <div id="settings-screen" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100;">
+        <div class="auth-card" style="width: 280px;">
+            <h3>Cài đặt thông số</h3>
+            <label>Số giờ OT mục tiêu (h):</label>
+            <input type="number" id="set-goal" placeholder="Ví dụ: 40">
+            <label>Số tiền/giờ (VNĐ):</label>
+            <input type="number" id="set-rate" placeholder="Ví dụ: 50000">
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="saveSettings()" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px;">Lưu</button>
+                <button onclick="closeSettings()" style="flex: 1; background: #ccc; border: none;">Đóng</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // --- CẤU HÌNH FIREBASE (Bạn cần thay thông tin này từ Console Firebase của bạn) ---
         const firebaseConfig = {
@@ -179,6 +193,72 @@
             viewDate.setMonth(viewDate.getMonth() + step);
             renderTable();
         }
+
+        // Mở và đóng cài đặt
+        function openSettings() {
+            document.getElementById('set-goal').value = currentUser.ot_goal;
+            document.getElementById('set-rate').value = currentUser.rate;
+            document.getElementById('settings-screen').classList.remove('hidden');
+        }
+        
+        function closeSettings() {
+            document.getElementById('settings-screen').classList.add('hidden');
+        }
+        
+        async function saveSettings() {
+            const newGoal = document.getElementById('set-goal').value;
+            const newRate = document.getElementById('set-rate').value;
+            
+            await db.ref('users/' + currentUser.id).update({
+                ot_goal: parseFloat(newGoal),
+                rate: parseInt(newRate)
+            });
+            
+            currentUser.ot_goal = newGoal;
+            currentUser.rate = newRate;
+            alert("Đã cập nhật!");
+            renderTable();
+            closeSettings();
+        }
+
+        // Hàm quan trọng: Hiển thị bảng từ ngày 21 tháng trước đến 20 tháng này
+        function renderTable() {
+            const month = viewDate.getMonth(); // 0-11
+            const year = viewDate.getFullYear();
+            
+            // Xác định ngày bắt đầu (21 tháng trước) và kết thúc (20 tháng này)
+            const startDate = new Date(year, month - 1, 21);
+            const endDate = new Date(year, month, 20);
+            
+            document.getElementById('table-title').innerText = 
+                `Tháng ${month + 1}/${year} (${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')})`;
+        
+            db.ref('logs/' + currentUser.id).on('value', snapshot => {
+                const logs = snapshot.val() || {};
+                const tbody = document.getElementById('ot-body');
+                tbody.innerHTML = '';
+                let totalHours = 0;
+        
+                // Lặp qua từng ngày trong chu kỳ
+                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                    const dateStr = d.toLocaleDateString('vi-VN');
+                    
+                    // Tìm xem ngày này có dữ liệu OT không
+                    let timeFound = "--:--";
+                    Object.values(logs).forEach(log => {
+                        if(log.date === dateStr) {
+                            timeFound = log.time;
+                            totalHours += 2; // Giả định mỗi lần check-out tính 2 tiếng OT (Bạn có thể tùy chỉnh logic này)
+                        }
+                    });
+        
+                    const row = `<tr><td>${dateStr}</td><td>${timeFound}</td></tr>`;
+                    tbody.innerHTML += row;
+                }
+                updateProgress(totalHours);
+            });
+        }
     </script>
 </body>
+
 </html>
