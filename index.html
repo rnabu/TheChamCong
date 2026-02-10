@@ -169,15 +169,27 @@
 
         // 3. LƯU THỜI GIAN
         function saveOT() {
-            if(!confirm("Lưu thời gian kết thúc hôm nay?")) return;
+            if(!confirm("Có muốn lưu thời gian kết thúc giờ làm cho ngày hôm nay?")) return;
+        
             const now = new Date();
-            const dateStr = now.toLocaleDateString('vi-VN');
+            // Tạo ID theo định dạng YYYY-MM-DD để làm key duy nhất cho mỗi ngày
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateId = `${year}-${month}-${day}`; 
+        
+            const dateStr = `${day}/${month}/${year}`;
             const timeStr = now.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-
-            db.ref('logs/' + currentUser.id).push({
+        
+            // Sử dụng .set() vào địa chỉ logs/username/dateId để ghi đè nếu đã tồn tại
+            db.ref('logs/' + currentUser.id + '/' + dateId).set({
                 date: dateStr,
                 time: timeStr,
                 timestamp: now.getTime()
+            }).then(() => {
+                alert("Đã lưu giờ về: " + timeStr);
+            }).catch(error => {
+                alert("Lỗi: " + error.message);
             });
         }
 
@@ -223,36 +235,42 @@
 
         // Hàm quan trọng: Hiển thị bảng từ ngày 21 tháng trước đến 20 tháng này
         function renderTable() {
-            const month = viewDate.getMonth(); // 0-11
+            const month = viewDate.getMonth(); 
             const year = viewDate.getFullYear();
             
-            // Xác định ngày bắt đầu (21 tháng trước) và kết thúc (20 tháng này)
             const startDate = new Date(year, month - 1, 21);
             const endDate = new Date(year, month, 20);
             
-            document.getElementById('table-title').innerText = 
-                `Tháng ${month + 1}/${year} (${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')})`;
+            document.getElementById('table-title').innerText = `Tháng ${month + 1}/${year}`;
         
+            // Lắng nghe dữ liệu
             db.ref('logs/' + currentUser.id).on('value', snapshot => {
                 const logs = snapshot.val() || {};
                 const tbody = document.getElementById('ot-body');
                 tbody.innerHTML = '';
                 let totalHours = 0;
         
-                // Lặp qua từng ngày trong chu kỳ
+                // Chạy vòng lặp qua từng ngày trong chu kỳ 21 -> 20
                 for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    const dateStr = d.toLocaleDateString('vi-VN');
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
                     
-                    // Tìm xem ngày này có dữ liệu OT không
+                    const dateId = `${y}-${m}-${day}`; // Khóa để tìm trong Database
+                    const displayDate = `${day}/${m}/${y}`;
+                    
                     let timeFound = "--:--";
-                    Object.values(logs).forEach(log => {
-                        if(log.date === dateStr) {
-                            timeFound = log.time;
-                            totalHours += 2; // Giả định mỗi lần check-out tính 2 tiếng OT (Bạn có thể tùy chỉnh logic này)
-                        }
-                    });
+                    if (logs[dateId]) {
+                        timeFound = logs[dateId].time;
+                        // Tính toán số giờ tăng ca (Logic ví dụ: mặc định mỗi ngày có log là 2h OT)
+                        // Bạn có thể sửa logic này nếu muốn tính dựa trên (giờ về - 17:00)
+                        totalHours += 2; 
+                    }
         
-                    const row = `<tr><td>${dateStr}</td><td>${timeFound}</td></tr>`;
+                    const row = `<tr>
+                        <td>${displayDate}</td>
+                        <td style="${timeFound !== '--:--' ? 'color: blue; font-weight: bold;' : ''}">${timeFound}</td>
+                    </tr>`;
                     tbody.innerHTML += row;
                 }
                 updateProgress(totalHours);
@@ -262,3 +280,4 @@
 </body>
 
 </html>
+
