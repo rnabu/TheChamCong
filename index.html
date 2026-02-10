@@ -57,6 +57,8 @@
                     <tr>
                         <th>Ngày</th>
                         <th>Giờ về</th>
+                        <th>Ngày</th>
+                        <th>Giờ về</th>
                     </tr>
                 </thead>
                 <tbody id="ot-body"></tbody>
@@ -274,29 +276,44 @@
             tbody.innerHTML = '';
         
             let totalHours = 0;
+            const daysWithLogs = [];
         
-            // Loop từ 21 tháng trước → 20 tháng hiện tại
+            // Lấy các ngày có dữ liệu
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                 const y = d.getFullYear();
                 const m = String(d.getMonth() + 1).padStart(2, '0');
                 const day = String(d.getDate()).padStart(2, '0');
                 
                 const dateId = `${y}-${m}-${day}`;
-                const displayDate = `${day}/${m}/${y}`;
-                
-                let timeFound = "--:--";
         
                 if (logs[dateId]) {
-                    timeFound = logs[dateId].time;
-                    totalHours += 2; // logic tạm: mỗi ngày có log = 2h OT
+                    daysWithLogs.push({
+                        date: `${day}/${m}/${y}`,
+                        time: logs[dateId].time
+                    });
+                    totalHours += 2;
                 }
+            }
         
-                const row = `<tr>
-                    <td>${displayDate}</td>
-                    <td style="${timeFound !== '--:--' ? 'color: blue; font-weight: bold;' : ''}">
-                        ${timeFound}
-                    </td>
-                </tr>`;
+            // Chia làm 2 nửa
+            const half = Math.ceil(daysWithLogs.length / 2);
+            const leftSide = daysWithLogs.slice(0, half);
+            const rightSide = daysWithLogs.slice(half);
+        
+            const maxRows = Math.max(leftSide.length, rightSide.length);
+        
+            for (let i = 0; i < maxRows; i++) {
+                const left = leftSide[i];
+                const right = rightSide[i];
+        
+                const row = `
+                    <tr>
+                        <td>${left ? left.date : ''}</td>
+                        <td style="color:blue;font-weight:bold">${left ? left.time : ''}</td>
+                        <td>${right ? right.date : ''}</td>
+                        <td style="color:blue;font-weight:bold">${right ? right.time : ''}</td>
+                    </tr>
+                `;
         
                 tbody.innerHTML += row;
             }
@@ -304,9 +321,11 @@
             updateProgress(totalHours);
         }
 
+
     </script>
 </body>
 
 </html>
+
 
 
