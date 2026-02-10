@@ -104,6 +104,9 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        
+        let logsRef = null;
+        let allLogs = {};
 
         let currentUser = null;
         let viewDate = new Date(); // Ngày đang xem trên table
@@ -134,9 +137,22 @@
 
         function loginSuccess(user, data) {
             currentUser = { id: user, ...data };
+        
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-screen').classList.remove('hidden');
-            renderTable();
+        
+            // Hủy listener cũ nếu có (tránh bị nhân đôi khi login lại)
+            if (logsRef) {
+                logsRef.off();
+            }
+        
+            // Tạo listener DUY NHẤT
+            logsRef = db.ref('logs/' + currentUser.id);
+        
+            logsRef.on('value', snapshot => {
+                allLogs = snapshot.val() || {};
+                renderTable(); // mỗi lần data đổi → vẽ lại bảng
+            });
         }
 
         // 2. LOGIC TÍNH CHU KỲ (21 THÁNG TRƯỚC - 20 THÁNG NÀY)
@@ -168,31 +184,41 @@
         }
 
         // 3. LƯU THỜI GIAN
-        function saveOT() {
+        async function saveOT() {
             if(!confirm("Có muốn lưu thời gian kết thúc giờ làm cho ngày hôm nay?")) return;
         
             const now = new Date();
-            // Tạo ID theo định dạng YYYY-MM-DD để làm key duy nhất cho mỗi ngày
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
-            const dateId = `${year}-${month}-${day}`; 
         
+            const dateId = `${year}-${month}-${day}`;
             const dateStr = `${day}/${month}/${year}`;
-            const timeStr = now.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-        
-            // Sử dụng .set() vào địa chỉ logs/username/dateId để ghi đè nếu đã tồn tại
-            db.ref('logs/' + currentUser.id + '/' + dateId).set({
-                date: dateStr,
-                time: timeStr,
-                timestamp: now.getTime()
-            }).then(() => {
-                alert("Đã lưu giờ về: " + timeStr);
-            }).catch(error => {
-                alert("Lỗi: " + error.message);
+            const timeStr = now.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
             });
+        
+            const ref = db.ref('logs/' + currentUser.id + '/' + dateId);
+            const snapshot = await ref.once('value');
+        
+            if (snapshot.exists()) {
+                // Đã có ngày này → chỉ update giờ
+                await ref.update({
+                    time: timeStr,
+                    timestamp: now.getTime()
+                });
+                alert("Đã cập nhật giờ về: " + timeStr);
+            } else {
+                // Chưa có → tạo mới record
+                await ref.set({
+                    date: dateStr,
+                    time: timeStr,
+                    timestamp: now.getTime()
+                });
+                alert("Đã lưu giờ về mới: " + timeStr);
+            }
         }
-
         function updateProgress(hours) {
             const goal = currentUser.ot_goal;
             const percent = Math.min((hours / goal) * 100, 100);
@@ -243,41 +269,44 @@
             
             document.getElementById('table-title').innerText = `Tháng ${month + 1}/${year}`;
         
-            // Lắng nghe dữ liệu
-            db.ref('logs/' + currentUser.id).on('value', snapshot => {
-                const logs = snapshot.val() || {};
-                const tbody = document.getElementById('ot-body');
-                tbody.innerHTML = '';
-                let totalHours = 0;
+            const logs = allLogs || {};
+            const tbody = document.getElementById('ot-body');
+            tbody.innerHTML = '';
         
-                // Chạy vòng lặp qua từng ngày trong chu kỳ 21 -> 20
-                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    const y = d.getFullYear();
-                    const m = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
-                    
-                    const dateId = `${y}-${m}-${day}`; // Khóa để tìm trong Database
-                    const displayDate = `${day}/${m}/${y}`;
-                    
-                    let timeFound = "--:--";
-                    if (logs[dateId]) {
-                        timeFound = logs[dateId].time;
-                        // Tính toán số giờ tăng ca (Logic ví dụ: mặc định mỗi ngày có log là 2h OT)
-                        // Bạn có thể sửa logic này nếu muốn tính dựa trên (giờ về - 17:00)
-                        totalHours += 2; 
-                    }
+            let totalHours = 0;
         
-                    const row = `<tr>
-                        <td>${displayDate}</td>
-                        <td style="${timeFound !== '--:--' ? 'color: blue; font-weight: bold;' : ''}">${timeFound}</td>
-                    </tr>`;
-                    tbody.innerHTML += row;
+            // Loop từ 21 tháng trước → 20 tháng hiện tại
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                
+                const dateId = `${y}-${m}-${day}`;
+                const displayDate = `${day}/${m}/${y}`;
+                
+                let timeFound = "--:--";
+        
+                if (logs[dateId]) {
+                    timeFound = logs[dateId].time;
+                    totalHours += 2; // logic tạm: mỗi ngày có log = 2h OT
                 }
-                updateProgress(totalHours);
-            });
+        
+                const row = `<tr>
+                    <td>${displayDate}</td>
+                    <td style="${timeFound !== '--:--' ? 'color: blue; font-weight: bold;' : ''}">
+                        ${timeFound}
+                    </td>
+                </tr>`;
+        
+                tbody.innerHTML += row;
+            }
+        
+            updateProgress(totalHours);
         }
+
     </script>
 </body>
 
 </html>
+
 
