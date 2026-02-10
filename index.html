@@ -6,6 +6,7 @@
     <title>OT Tracker 24/7</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     
     <style>
         body { font-family: sans-serif; margin: 0; background: #f4f4f4; }
@@ -20,7 +21,7 @@
         #main-screen { height: 100vh; display: flex; flex-direction: column; }
         .table-section { flex: 2; overflow-y: auto; background: white; padding: 15px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
         th { background: #f8f8f8; position: sticky; top: 0; }
 
         .control-section { flex: 1; border-top: 2px solid #ddd; background: #fff; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
@@ -28,10 +29,24 @@
         /* Process Line */
         .progress-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .progress-bar-bg { flex: 1; background: #eee; height: 25px; border-radius: 12px; overflow: hidden; position: relative; }
-        .progress-fill { background: #28a745; height: 100%; width: 0%; transition: width 0.3s; }
-        .progress-text { position: absolute; width: 100%; text-align: center; line-height: 25px; font-size: 12px; font-weight: bold; }
+        .progress-fill { 
+            background: #28a745; 
+            height: 100%; 
+            width: 0%; 
+            transition: width 0.3s; 
+        }
+        .progress-text { 
+            position: absolute; 
+            width: 100%; 
+            text-align: center; 
+            line-height: 25px; 
+            font-size: 12px; 
+            font-weight: normal; 
+            color: white;
+        }
         
         /* Buttons */
+        .btn-login {margin-top: 10px; width: 224px;height: 40px; border-radius: 7px; border: none; padding: 8px; cursor: pointer; }
         .action-row { display: flex; justify-content: space-between; align-items: center; }
         .btn-finish { background: #ff9800; color: white; border: none; padding: 15px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .nav-group { display: flex; gap: 10px; }
@@ -42,16 +57,18 @@
 
     <div id="auth-screen">
         <div class="auth-card">
-            <h2>Đăng nhập / Đăng ký</h2>
-            <input type="text" id="username" placeholder="Tên tài khoản">
+            <h4 style="font-size: 15px; text-align: center; margin-bottom: 25px;">Đăng nhập / Đăng ký</h4>
+            <input type="email" id="username" placeholder="Email">
             <input type="password" id="password" placeholder="Mật khẩu">
-            <button onclick="handleAuth()">Tiếp tục</button>
+            <button class="btn-login" onclick="handleAuth()">Tiếp tục</button>
         </div>
     </div>
 
     <div id="main-screen" class="hidden">
+        
         <div class="table-section">
-            <h3 id="table-title">Tháng 02/2026</h3>
+            <h2 id="welcome-text" style="margin:10px 0 0 15px;">Xin chao</h2>
+            <h4 id="table-title">Tháng 02/2026</h4>
             <table>
                 <thead>
                     <tr>
@@ -68,19 +85,38 @@
         <div class="control-section">
             <div class="progress-container">
                 <div class="progress-bar-bg">
-                    <div id="progress-fill" class="progress-fill"></div>
                     <span id="progress-text" class="progress-text">0/40h</span>
+                    <div id="progress-fill" class="progress-fill"></div>
+                    
                 </div>
-                <div id="money-label" style="font-weight: bold; color: #007bff; min-width: 80px;">0đ</div>
+                <div id="money-label" style="font-weight: normal; color: #007bff; min-width: 80px;">0đ</div>
             </div>
 
             <div class="action-row">
-                <button class="btn-finish" onclick="saveOT()">KẾT THÚC GIỜ LÀM</button>
+                <button class="btn-finish" onclick="saveWork()">KẾT THÚC GIỜ LÀM</button>
                 <div class="nav-group">
                     <button class="btn-nav" onclick="changeMonth(-1)">◀</button>
                     <button class="btn-nav" onclick="changeMonth(1)">▶</button>
+                    <button class="btn-nav" onclick="openAddManual()">＋</button>
                     <button class="btn-nav" onclick="openSettings()">⚙️</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="manual-screen" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:100;">
+        <div class="auth-card">
+            <h3>Thêm / Sửa ngày làm</h3>
+
+            <label>Ngày:</label>
+            <input type="date" id="manual-date">
+
+            <label>Giờ về:</label>
+            <input type="time" id="manual-time">
+
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button onclick="saveManual()">Lưu</button>
+                <button onclick="closeManual()">Đóng</button>
             </div>
         </div>
     </div>
@@ -90,9 +126,12 @@
             <h3>Cài đặt thông số</h3>
             <label>Số giờ OT mục tiêu (h):</label>
             <input type="number" id="set-goal" placeholder="Ví dụ: 40">
-            <label>Số tiền/giờ (VNĐ):</label>
-            <input type="number" id="set-rate" placeholder="Ví dụ: 50000">
+            <label>Số tiền/giờ (JPY):</label>
+            <input type="number" id="set-rate" placeholder="Ví dụ: 1500">
+            <label>Tên hiển thị:</label>
+            <input type="text" id="set-name" placeholder="Tên của bạn">
             <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="logout()" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px;">Logout</button>
                 <button onclick="saveSettings()" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px;">Lưu</button>
                 <button onclick="closeSettings()" style="flex: 1; background: #ccc; border: none;">Đóng</button>
             </div>
@@ -100,12 +139,19 @@
     </div>
     
     <script>
-        // --- CẤU HÌNH FIREBASE (Bạn cần thay thông tin này từ Console Firebase của bạn) ---
+        // --- FIREBASE SETTING
         const firebaseConfig = {
-            databaseURL: "https://thechamcong-dcd6e-default-rtdb.asia-southeast1.firebasedatabase.app/",
+        apiKey: "AIzaSyCxGeOoiqcG2R1gmA5iWK9XjpcF3K0jGOs",
+        authDomain: "thechamcong-dcd6e.firebaseapp.com",
+        databaseURL: "https://thechamcong-dcd6e-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "thechamcong-dcd6e",
+        storageBucket: "thechamcong-dcd6e.firebasestorage.app",
+        messagingSenderId: "141017912990",
+        appId: "1:141017912990:web:79ed5594b2f7ed3e624d8f"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
         
         let logsRef = null;
         let allLogs = {};
@@ -113,43 +159,73 @@
         let currentUser = null;
         let viewDate = new Date(); // Ngày đang xem trên table
 
-        // 1. XỬ LÝ ĐĂNG NHẬP / ĐĂNG KÝ
+        // login/register
         async function handleAuth() {
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-            if(!user || !pass) return alert("Nhập đủ thông tin!");
+            const email = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-            const snapshot = await db.ref('users/' + user).once('value');
-            const userData = snapshot.val();
+            if (!email || !password) {
+                alert("Nhập đủ email và mật khẩu!");
+                return;
+            }
 
-            if (userData) {
-                if (userData.password === pass) {
-                    loginSuccess(user, userData);
-                } else {
+            try {
+                // Thử đăng nhập trước
+                const userCred = await auth.signInWithEmailAndPassword(email, password);
+                onAuthSuccess(userCred.user);
+
+            } catch (err) {
+
+                console.log(err.code);
+                console.log(err.message);
+
+                if (
+                    err.code === 'auth/user-not-found' ||
+                    err.code === 'auth/invalid-login-credentials'
+                ) {
+                    if (confirm("Tài khoản chưa tồn tại hoặc sai mật khẩu.\nBạn có muốn tạo mới không?")) {
+
+                        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+                        const randomName = generateRandomName();
+
+                        await db.ref('users/' + userCred.user.uid).set({
+                            display_name: randomName,
+                            ot_goal: 40,
+                            rate: 50000
+                        });
+                        onAuthSuccess(userCred.user);
+                    }
+                } 
+                else if (err.code === 'auth/wrong-password') {
                     alert("Sai mật khẩu!");
                 }
-            } else {
-                if (confirm("Tài khoản chưa tồn tại. Bạn có muốn tạo mới?")) {
-                    const newUser = { password: pass, ot_goal: 40, rate: 50000 };
-                    await db.ref('users/' + user).set(newUser);
-                    loginSuccess(user, newUser);
+                else {
+                    alert(err.message);
                 }
             }
         }
+        async function onAuthSuccess(firebaseUser) {
+            const uid = firebaseUser.uid;
 
-        function loginSuccess(user, data) {
-            currentUser = { id: user, ...data };
-        
-            // Lưu session
-            localStorage.setItem('ot_user', JSON.stringify(currentUser));
-        
+            const snapshot = await db.ref('users/' + uid).once('value');
+            const data = snapshot.val() || {
+                display_name: generateRandomName(),
+                ot_goal: 40,
+                rate: 50000
+            };
+
+            currentUser = {
+                id: uid,
+                name: data.display_name,
+                ot_goal: data.ot_goal,
+                rate: data.rate
+            };
+            document.getElementById('welcome-text').innerText ="Xin chào " + currentUser.name;
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-screen').classList.remove('hidden');
-        
-            // Hủy listener cũ nếu có
+
             if (logsRef) logsRef.off();
-        
-            // Tạo listener realtime
+
             logsRef = db.ref('logs/' + currentUser.id);
             logsRef.on('value', snapshot => {
                 allLogs = snapshot.val() || {};
@@ -157,35 +233,27 @@
             });
         }
 
-        // 2. LOGIC TÍNH CHU KỲ (21 THÁNG TRƯỚC - 20 THÁNG NÀY)
-        function renderTable() {
-            const month = viewDate.getMonth() + 1;
-            const year = viewDate.getFullYear();
-            document.getElementById('table-title').innerText = `Chu kỳ: 21/${month-1} - 20/${month}/${year}`;
-            
-            // Lấy dữ liệu từ Firebase
-            db.ref('logs/' + currentUser.id).on('value', snapshot => {
-                const logs = snapshot.val() || {};
-                const tbody = document.getElementById('ot-body');
-                tbody.innerHTML = '';
-                
-                let totalOTMinutes = 0;
-                
-                // Logic hiển thị các ngày trong chu kỳ
-                // (Phần này cần loop từ ngày 21 tháng trước đến 20 tháng này)
-                // Tạm thời hiển thị các dữ liệu đã có trong DB
-                Object.values(logs).forEach(log => {
-                    const row = `<tr><td>${log.date}</td><td>${log.time}</td></tr>`;
-                    tbody.innerHTML += row;
-                    // Giả định mỗi lần bấm là 2h OT để tính process bar
-                    totalOTMinutes += 120; 
-                });
+        // 3. LƯU THỜI GIAN
+        async function saveWork() {
+            if(!confirm("Lưu giờ kết thúc hôm nay?")) return;
 
-                updateProgress(totalOTMinutes / 60);
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth()+1).padStart(2,'0');
+            const d = String(now.getDate()).padStart(2,'0');
+
+            const dateId = `${y}-${m}-${d}`;
+            const timeStr = now.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            await db.ref('logs/' + currentUser.id + '/' + dateId).set({
+                time: timeStr,
+                timestamp: now.getTime()
             });
         }
 
-        // 3. LƯU THỜI GIAN
         async function saveOT() {
             if(!confirm("Có muốn lưu thời gian kết thúc giờ làm cho ngày hôm nay?")) return;
         
@@ -221,47 +289,93 @@
                 alert("Đã lưu giờ về mới: " + timeStr);
             }
         }
-        function updateProgress(hours) {
-            const goal = currentUser.ot_goal;
-            const percent = Math.min((hours / goal) * 100, 100);
-            document.getElementById('progress-fill').style.width = percent + '%';
-            document.getElementById('progress-text').innerText = `${hours.toFixed(1)}/${goal}h`;
-            document.getElementById('money-label').innerText = (hours * currentUser.rate).toLocaleString() + 'đ';
+        function updateProgress(totalHours) {
+            if (!currentUser) return;
+
+            const goal = parseFloat(currentUser.ot_goal) || 40;
+            const percent = Math.min((totalHours / goal) * 100, 100);
+
+            const fill = document.getElementById('progress-fill');
+            const text = document.getElementById('progress-text');
+            const money = document.getElementById('money-label');
+
+            if (fill) fill.style.width = percent + '%';
+            if (text) text.innerText = totalHours.toFixed(1) + "h / " + goal + "h";
+            if (money) money.innerText =
+                (totalHours * currentUser.rate).toLocaleString() + "¥";
         }
+
 
         function changeMonth(step) {
             viewDate.setMonth(viewDate.getMonth() + step);
             renderTable();
         }
-
-        // Mở và đóng cài đặt
         function openSettings() {
+            document.getElementById('set-name').value = currentUser.name;
             document.getElementById('set-goal').value = currentUser.ot_goal;
             document.getElementById('set-rate').value = currentUser.rate;
             document.getElementById('settings-screen').classList.remove('hidden');
-        }
-        
+        }        
         function closeSettings() {
             document.getElementById('settings-screen').classList.add('hidden');
         }
-        
         async function saveSettings() {
+            const newName = document.getElementById('set-name').value;
             const newGoal = document.getElementById('set-goal').value;
             const newRate = document.getElementById('set-rate').value;
-            
+
             await db.ref('users/' + currentUser.id).update({
+                display_name: newName,
                 ot_goal: parseFloat(newGoal),
                 rate: parseInt(newRate)
             });
-            
-            currentUser.ot_goal = newGoal;
-            currentUser.rate = newRate;
+
+            currentUser.name = newName;
+            currentUser.rate = parseInt(newRate);
+            currentUser.ot_goal = parseFloat(newGoal);
+
+            document.getElementById('welcome-text').innerText =
+                "Xin chào " + currentUser.name;
+
             alert("Đã cập nhật!");
             renderTable();
             closeSettings();
         }
+        function openAddManual(dateId = null, time = null) {
+            document.getElementById('manual-screen').classList.remove('hidden');
 
-        // Hàm quan trọng: Hiển thị bảng từ ngày 21 tháng trước đến 20 tháng này
+            if (dateId) {
+                document.getElementById('manual-date').value = dateId;
+                document.getElementById('manual-time').value = time || '';
+            } else {
+                document.getElementById('manual-date').value = '';
+                document.getElementById('manual-time').value = '';
+            }
+        }
+        function closeManual() {
+            document.getElementById('manual-screen').classList.add('hidden');
+        }
+        async function saveManual() {
+            const date = document.getElementById('manual-date').value;
+            const time = document.getElementById('manual-time').value;
+
+            if (!date || !time) {
+                alert("Nhập đủ ngày và giờ");
+                return;
+            }
+
+            const dateId = date; // yyyy-mm-dd
+
+            await db.ref('logs/' + currentUser.id + '/' + dateId).set({
+                time: time,
+                timestamp: new Date(date + 'T' + time).getTime()
+            });
+
+            closeManual();
+        }
+
+
+
         function renderTable() {
             const month = viewDate.getMonth(); 
             const year = viewDate.getFullYear();
@@ -287,11 +401,15 @@
                 const dateId = `${y}-${m}-${day}`;
         
                 if (logs[dateId]) {
+                    const time = logs[dateId].time;
+
                     daysWithLogs.push({
                         date: `${day}/${m}/${y}`,
-                        time: logs[dateId].time
+                        dateId: dateId,
+                        time: time
                     });
-                    totalHours += 2;
+
+                    totalHours += calculateOT(time);
                 }
             }
         
@@ -308,10 +426,22 @@
         
                 const row = `
                     <tr>
-                        <td>${left ? left.date : ''}</td>
-                        <td style="color:blue;font-weight:bold">${left ? left.time : ''}</td>
-                        <td>${right ? right.date : ''}</td>
-                        <td style="color:blue;font-weight:bold">${right ? right.time : ''}</td>
+                        <td onclick="${left ? `openAddManual('${left.dateId}','${left.time}')` : ''}">
+                            ${left ? left.date : ''}
+                        </td>
+                        <td style="color:blue;font-weight:bold"
+                            onclick="${left ? `openAddManual('${left.dateId}','${left.time}')` : ''}">
+                            ${left ? left.time : ''}
+                        </td>
+
+                        <td onclick="${right ? `openAddManual('${right.dateId}','${right.time}')` : ''}">
+                            ${right ? right.date : ''}
+                        </td>
+                        <td style="color:blue;font-weight:bold"
+                            onclick="${right ? `openAddManual('${right.dateId}','${right.time}')` : ''}">
+                            ${right ? right.time : ''}
+                        </td>
+
                     </tr>
                 `;
         
@@ -321,21 +451,70 @@
             updateProgress(totalHours);
         }
 
+        function calculateMonthlyOT(data) {
+            let total = 0;
 
-        
-        window.onload = function () {
-        const savedUser = localStorage.getItem('ot_user');
-    
-        if (savedUser) {
-            const userData = JSON.parse(savedUser);
-            loginSuccess(userData.id, userData);
+            Object.values(data || {}).forEach(day => {
+                total += day.otHours || 0;
+            });
+
+            return total;
         }
-    };
+        function calculateOT(timeStr){
+            const [h,m] = timeStr.split(':').map(Number);
+            let end = h*60+m;
+
+            const start = 17*60+40;
+            const overnightLimit = 8*60+29;
+
+            // Nếu về sau 0h → cộng 24h
+            if(end <= overnightLimit){
+                end += 24*60;
+            }
+
+            if(end <= start) return 0;
+
+            const diff = end - start;
+            const rounded = Math.floor(diff/15)*15;
+
+            return rounded/60;
+        }
+
+
+
+        function logout() {
+            if (!confirm("Bạn có chắc muốn đăng xuất?")) return;
+
+            auth.signOut().then(() => {
+                // reset dữ liệu local
+                currentUser = null;
+                allLogs = {};
+
+                if (logsRef) logsRef.off();
+
+                // quay lại màn hình login
+                document.getElementById('main-screen').classList.add('hidden');
+                document.getElementById('settings-screen').classList.add('hidden');
+                document.getElementById('auth-screen').classList.remove('hidden');
+            });
+        }
+        function generateRandomName() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 5; i++) {
+                code += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return 'USER-' + code;
+        }
+
+        window.onload = function () {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    onAuthSuccess(user);
+                }
+            });
+        };
     </script>
 </body>
 
 </html>
-
-
-
-
