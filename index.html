@@ -304,12 +304,20 @@
     <div id="login-screen">
 
         <!-- LOGIN FORM -->
-        <form id="login-form" class="login-card">
+        <form id="login-form" class="login-card" autocomplete="on">
             <h4>Đăng nhập</h4>
 
-            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="email"
+                   id="login-email"
+                   name="email"
+                   autocomplete="username"
+                   required>
             <div class="password-wrap">
-                <input type="password" id="login-password" placeholder="Mật khẩu" required>
+                <input type="password"
+                       id="login-password"
+                       name="password"
+                       autocomplete="current-password"
+                       required>
                 <span class="toggle-pass" onclick="togglePass('login-password', this)">👁</span>
             </div>
 
