@@ -3,61 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thẻ chấm công online</title>
+    <title>The cham cong</title>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
-    
-    <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f4; }
-        .hidden { display: none !important; }
-        
-        /* Màn hình Login */
-        #auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        .auth-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input { display: block; margin: 10px 0; padding: 10px; width: 200px; }
-        
-        /* Màn hình Chính */
-        #main-screen { height: 100vh; display: flex; flex-direction: column; }
-        .table-section { flex: 2; overflow-y: auto; background: white; padding: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
-        th { background: #f8f8f8; position: sticky; top: 0; }
 
-        .control-section { flex: 1; border-top: 2px solid #ddd; background: #fff; padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
-        
-        /* Process Line */
-        .progress-container { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .progress-bar-bg { flex: 1; background: #eee; height: 25px; border-radius: 12px; overflow: hidden; position: relative; }
-        .progress-fill { 
-            background: #28a745; 
-            height: 100%; 
-            width: 0%; 
-            transition: width 0.3s; 
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
         }
-        .progress-text { 
-            position: absolute; 
-            width: 100%; 
-            text-align: center; 
-            line-height: 25px; 
-            font-size: 12px; 
-            font-weight: normal; 
+        button {
+            border: none;
+            height: 40px;
+            width: 100px;
+            cursor: pointer;
+            border-radius: 25px;
+            margin: 5px 5px 15px 5px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Login */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+            #login-screen h4 {
+                font-size: 15px;
+                text-align: center;
+                margin-bottom: 25px;
+            }
+        .auth-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        input {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            width: 200px;
+        }
+        .btn-login {
+            margin-top: 10px;
+            width: 224px;
+            height: 40px;
+            border-radius: 7px;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        /* mainbody */
+        .header {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            padding-left:20px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #f2f2f2;
+        }
+        .main {
+            flex: 8;
+            position: relative;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        .card-wrapper {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            transition: transform 0.4s ease;
+        }
+        .card {
+            width: 50%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .table-area table, th, td{
+            border: 1px solid #ccc;
+        }
+        .table-area th, td {
+            padding: 8px;
+            text-align: center;
+            font-weight: normal;
+            font-size: 13px;
+        }
+        .table-area th {
+            background: #f2f2f2;
+        }
+        /* Process Line */
+        .progress-area {
+            display: flex;
+            width: 100%;
+            flex-direction: row;
+            align-items: center;
+            padding: 15px;
+            gap: 10px;
+        }
+        .progress-container {
+            flex: 4;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            background: #eee;
+            height: 25px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            background: #28a745;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 25px;
+            font-size: 13px;
+            font-weight: normal;
             color: white;
         }
-        
-        /* Buttons */
-        .btn-login {margin-top: 10px; width: 224px;height: 40px; border-radius: 7px; border: none; padding: 8px; cursor: pointer; }
-        .action-row { display: flex; justify-content: space-between; align-items: center; }
-        .btn-finish { background: #ff9800; color: white; border: none; padding: 15px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .nav-group { display: flex; gap: 10px; }
-        .btn-nav { padding: 10px; cursor: pointer; }
+        #money-label {
+            flex: 1;
+            font-weight: normal;
+            color: #007bff;
+            font-size: 13px;
+            text-align: center;
+            align-items: center;
+            padding-right: 16px;
+        }
+
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .overlay button {
+            font-size: 15px;
+            
+            padding: 8px 14px;
+            width: 75px;
+        }
+        .modal {
+            background: white;
+            padding: 10px;
+            border-radius: 25px;
+            width: 280px;
+            text-align: center;
+        }
+            .modal h3 {
+                text-align: center;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            .modal .btn-section {
+                padding-top: 10px;
+            }
+
+        #mainCard {
+            display: flex;
+            flex-direction: column;
+        }
+        .maincard-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .table-area {
+            flex: 9;
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+        }
+        .table-area table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 10px;
+            text-align: left;
+            padding-left: 25px;
+        }
+        .btn-Logout {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-Save {
+            background: #28a745;
+            color: white;
+        }
+        .footer {
+            flex: 1;
+            display: flex;
+            padding: 15px;
+            background: #f2f2f2;
+        }
+            .footer button {
+                border: none;
+                font-size: 15px;
+                cursor: pointer;
+                border-radius: 25px;
+                margin: 5px;
+            }
+        .small-btn {
+            width: 12%;
+            background: #e0e0e0;
+        }
+        .normal-btn {
+            width: 20%;
+            background: #c4dc48;
+        }
+        .big-btn {
+            width: 32%;
+            background: #ff6666;
+            color: white;
+            font-weight: normal;
+        }
     </style>
 </head>
-<body>
 
-    <div id="auth-screen">
-        <div class="auth-card">
-            <h4 style="font-size: 15px; text-align: center; margin-bottom: 25px;">Đăng nhập / Đăng ký</h4>
+<body>
+    <div id="login-screen">
+        <div class="login-card">
+            <h4>Đăng nhập / Đăng ký</h4>
             <input type="email" id="username" placeholder="Email">
             <input type="password" id="password" placeholder="Mật khẩu">
             <button class="btn-login" onclick="handleAuth()">Tiếp tục</button>
@@ -65,457 +264,476 @@
     </div>
 
     <div id="main-screen" class="hidden">
-        
-        <div class="table-section">
-            <h2 id="welcome-text" style="margin:10px 0 0 15px;">Xin chào bạn !</h2>
-            <h4 id="table-title">Tháng 02/2026</h4>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Ngày</th>
-                        <th>Giờ về</th>
-                        <th>Ngày</th>
-                        <th>Giờ về</th>
-                    </tr>
-                </thead>
-                <tbody id="ot-body"></tbody>
-            </table>
-        </div>
+        <div class="container">
+            <!-- HEADER -->
+            <div class="header">
+                <div id="welcome-text"> Welcome abc</div>
+            </div>
 
-        <div class="control-section">
-            <div class="progress-container">
-                <div class="progress-bar-bg">
-                    <span id="progress-text" class="progress-text">0/40h</span>
-                    <div id="progress-fill" class="progress-fill"></div>
-                    
+            <!-- MAIN -->
+            <div class="main">
+                <div class="card-wrapper" id="cardWrapper">
+                    <!-- MAIN CARD -->
+                    <div class="card" id="mainCard">
+                        <h4 id="table-title"></h4>
+                        <div class="mainCard-content">
+                            <div class="table-area">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Ngày tháng</th>
+                                            <th>Giờ</th>
+                                            <th>Ngày tháng</th>
+                                            <th>Giờ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ot-body"></tbody>
+                                </table>
+                            </div>
+                            <div class="progress-area">
+                                <div class="progress-container">
+                                    <div class="progress-bar-bg">
+                                        <span id="progress-text" class="progress-text">0/40h</span>
+                                        <div id="progress-fill" class="progress-fill"></div>
+                                    </div>
+                                </div>
+                                <div id="money-label">0đ</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- SETTING CARD -->
+                    <div class="card" id="settingCard">
+                        <!--nothing-->
+                        <h3>dang xay dung</h3>
+                    </div>
                 </div>
-                <div id="money-label" style="font-weight: normal; color: #007bff; min-width: 80px;">0đ</div>
             </div>
 
-            <div class="action-row">
-                <button class="btn-finish" onclick="saveWork()">CHẤM CÔNG NGAY</button>
-                <div class="nav-group">
-                    <button class="btn-nav" onclick="changeMonth(-1)">◀</button>
-                    <button class="btn-nav" onclick="changeMonth(1)">▶</button>
-                    <button class="btn-nav" onclick="openAddManual()">＋</button>
-                    <button class="btn-nav" onclick="openSettings()">⚙️</button>
+            <!-- FOOTER -->
+            <div class="footer">
+                <button class="small-btn" onclick="openSettings()">⚙️</button>
+                <button class="small-btn" onclick="openAddManual()">＋</button>
+                <button class="small-btn" onclick="changeMonth(-1)">◀</button>
+                <button class="small-btn" onclick="changeMonth(1)">▶</button>
+                <button class="big-btn" onclick="openConfirm()">KẾT THÚC</button>
+                <button class="normal-btn" onclick="showCalendar()">📅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="overlay" id="setting" onclick="closeSetting(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3>Cài đặt</h3>
+
+            <div class="input-group">
+                <label>Số giờ OT mục tiêu (h):</label><br>
+                <input type="number" id="set-goal" placeholder="Ví dụ: 40">
+            </div>
+
+            <div class="input-group">
+                <label>Số tiền/giờ (JPY):</label><br>
+                <input type="number" id="set-rate" placeholder="Ví dụ: 1500">
+            </div>
+
+            <div class="input-group">
+                <label>Tên hiển thị:</label><br>
+                <input type="text" id="set-name" placeholder="Tên của bạn">
+            </div>
+            <div class="btn-section">
+                <button class="btn-Logout" onclick="logout()">Logout</button>
+                <button class="btn-Save" onclick="saveSettings()">Lưu</button>
+                <button onclick="closeSetting()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+        <div class="overlay" id="overlay" onclick="closeModal(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <p>Có muốn kết thúc ngay ?</p>
+                <button onclick="confirmEnd()">Yes</button>
+                <button onclick="closeModal()">No</button>
+            </div>
+        </div>
+
+        <div class="overlay" id="add-edit" onclick="closeManual(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <h3>Thêm / Sửa ngày làm</h3>
+                <div class="input-group">
+                    <label>Ngày:</label><br>
+                    <input type="date" id="manual-date">
                 </div>
+                <div class="input-group">
+                    <label>Giờ về:</label><br>
+                    <input type="time" id="manual-time">
+                </div>
+                <div class="btn-section">
+                    <button class="btn-Save" onclick="saveManual()">Lưu</button>
+                    <button onclick="closeManual()">Đóng</button>
+                </div>
+
             </div>
         </div>
-    </div>
 
-    <div id="manual-screen" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:100;">
-        <div class="auth-card">
-            <h3>Thêm / Sửa ngày giờ công</h3>
+        <script>
+            // --- FIREBASE SETTING
+            const firebaseConfig = {
+                apiKey: "AIzaSyCxGeOoiqcG2R1gmA5iWK9XjpcF3K0jGOs",
+                authDomain: "thechamcong-dcd6e.firebaseapp.com",
+                databaseURL: "https://thechamcong-dcd6e-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "thechamcong-dcd6e",
+                storageBucket: "thechamcong-dcd6e.firebasestorage.app",
+                messagingSenderId: "141017912990",
+                appId: "1:141017912990:web:79ed5594b2f7ed3e624d8f"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            const auth = firebase.auth();
 
-            <label>Ngày:</label>
-            <input type="date" id="manual-date">
+            let logsRef = null;
+            let allLogs = {};
 
-            <label>Giờ về:</label>
-            <input type="time" id="manual-time">
+            let currentUser = null;
+            let viewDate = new Date(); // Ngày đang xem trên table
 
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button onclick="saveManual()">Lưu</button>
-                <button onclick="closeManual()">Đóng</button>
-            </div>
-        </div>
-    </div>
+            // login/register
+            async function handleAuth() {
+                const email = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
 
-    <div id="settings-screen" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 100;">
-        <div class="auth-card" style="width: 280px;">
-            <h3>Cài đặt thông số</h3>
-            <label>Số tiếng muốn tăng ca trong 1 tháng:</label>
-            <input type="number" id="set-goal" placeholder="Ví dụ: 40">
-            <label>Lương 1 giờ tăng ca:</label>
-            <input type="number" id="set-rate" placeholder="Ví dụ: 1500">
-            <label>Tên hiển thị:</label>
-            <input type="text" id="set-name" placeholder="Tên của bạn">
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button onclick="logout()" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px;">Đăng xuất</button>
-                <button onclick="saveSettings()" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px;">Lưu</button>
-                <button onclick="closeSettings()" style="flex: 1; background: #ccc; border: none;">Đóng</button>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        // --- FIREBASE SETTING
-        const firebaseConfig = {
-        apiKey: "AIzaSyCxGeOoiqcG2R1gmA5iWK9XjpcF3K0jGOs",
-        authDomain: "thechamcong-dcd6e.firebaseapp.com",
-        databaseURL: "https://thechamcong-dcd6e-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "thechamcong-dcd6e",
-        storageBucket: "thechamcong-dcd6e.firebasestorage.app",
-        messagingSenderId: "141017912990",
-        appId: "1:141017912990:web:79ed5594b2f7ed3e624d8f"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const auth = firebase.auth();
-        
-        let logsRef = null;
-        let allLogs = {};
+                if (!email || !password) {
+                    alert("Nhập đủ email và mật khẩu!");
+                    return;
+                }
 
-        let currentUser = null;
-        let viewDate = new Date(); // Ngày đang xem trên table
+                try {
+                    // Thử đăng nhập trước
+                    const userCred = await auth.signInWithEmailAndPassword(email, password);
+                    onAuthSuccess(userCred.user);
 
-        // login/register
-        async function handleAuth() {
-            const email = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+                } catch (err) {
 
-            if (!email || !password) {
-                alert("Nhập đầy đủ email và mật khẩu!");
-                return;
-            }
+                    console.log(err.code);
+                    console.log(err.message);
 
-            try {
-                // Thử đăng nhập trước
-                const userCred = await auth.signInWithEmailAndPassword(email, password);
-                onAuthSuccess(userCred.user);
+                    if (
+                        err.code === 'auth/user-not-found' ||
+                        err.code === 'auth/invalid-login-credentials'
+                    ) {
+                        if (confirm("Tài khoản chưa tồn tại hoặc sai mật khẩu.\nBạn có muốn tạo mới không?")) {
 
-            } catch (err) {
+                            const userCred = await auth.createUserWithEmailAndPassword(email, password);
+                            const randomName = generateRandomName();
 
-                console.log(err.code);
-                console.log(err.message);
-
-                if (
-                    err.code === 'auth/user-not-found' ||
-                    err.code === 'auth/invalid-login-credentials'
-                ) {
-                    if (confirm("Tài khoản chưa tồn tại hoặc sai mật khẩu.\nBạn có muốn tạo mới không?")) {
-
-                        const userCred = await auth.createUserWithEmailAndPassword(email, password);
-                        const randomName = generateRandomName();
-
-                        await db.ref('users/' + userCred.user.uid).set({
-                            display_name: randomName,
-                            ot_goal: 40,
-                            rate: 50000
-                        });
-                        onAuthSuccess(userCred.user);
+                            await db.ref('users/' + userCred.user.uid).set({
+                                display_name: randomName,
+                                ot_goal: 40,
+                                rate: 50000
+                            });
+                            onAuthSuccess(userCred.user);
+                        }
                     }
-                } 
-                else if (err.code === 'auth/wrong-password') {
-                    alert("Sai mật khẩu!");
-                }
-                else {
-                    alert(err.message);
-                }
-            }
-        }
-        async function onAuthSuccess(firebaseUser) {
-            const uid = firebaseUser.uid;
-
-            const snapshot = await db.ref('users/' + uid).once('value');
-            const data = snapshot.val() || {
-                display_name: generateRandomName(),
-                ot_goal: 40,
-                rate: 50000
-            };
-
-            currentUser = {
-                id: uid,
-                name: data.display_name,
-                ot_goal: data.ot_goal,
-                rate: data.rate
-            };
-            document.getElementById('welcome-text').innerText ="Xin chào " + currentUser.name;
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-screen').classList.remove('hidden');
-
-            if (logsRef) logsRef.off();
-
-            logsRef = db.ref('logs/' + currentUser.id);
-            logsRef.on('value', snapshot => {
-                allLogs = snapshot.val() || {};
-                renderTable();
-            });
-        }
-
-        // 3. LƯU THỜI GIAN
-        async function saveWork() {
-            if(!confirm("Có chắc là muốn chấm công ngay?")) return;
-
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth()+1).padStart(2,'0');
-            const d = String(now.getDate()).padStart(2,'0');
-
-            const dateId = `${y}-${m}-${d}`;
-            const timeStr = now.toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
-            await db.ref('logs/' + currentUser.id + '/' + dateId).set({
-                time: timeStr,
-                timestamp: now.getTime()
-            });
-        }
-
-        async function saveOT() {
-            if(!confirm("Có muốn chấm công cho ngày hôm nay?")) return;
-        
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-        
-            const dateId = `${year}-${month}-${day}`;
-            const dateStr = `${day}/${month}/${year}`;
-            const timeStr = now.toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        
-            const ref = db.ref('logs/' + currentUser.id + '/' + dateId);
-            const snapshot = await ref.once('value');
-        
-            if (snapshot.exists()) {
-                // Đã có ngày này → chỉ update giờ
-                await ref.update({
-                    time: timeStr,
-                    timestamp: now.getTime()
-                });
-                alert("Đã cập nhật giờ chấm công: " + timeStr);
-            } else {
-                // Chưa có → tạo mới record
-                await ref.set({
-                    date: dateStr,
-                    time: timeStr,
-                    timestamp: now.getTime()
-                });
-                alert("Đã lưu giờ về mới: " + timeStr);
-            }
-        }
-        function updateProgress(totalHours) {
-            if (!currentUser) return;
-
-            const goal = parseFloat(currentUser.ot_goal) || 40;
-            const percent = Math.min((totalHours / goal) * 100, 100);
-
-            const fill = document.getElementById('progress-fill');
-            const text = document.getElementById('progress-text');
-            const money = document.getElementById('money-label');
-
-            if (fill) fill.style.width = percent + '%';
-            if (text) text.innerText = totalHours.toFixed(1) + "h / " + goal + "h";
-            if (money) money.innerText =
-                (totalHours * currentUser.rate).toLocaleString() + "¥";
-        }
-
-
-        function changeMonth(step) {
-            viewDate.setMonth(viewDate.getMonth() + step);
-            renderTable();
-        }
-        function openSettings() {
-            document.getElementById('set-name').value = currentUser.name;
-            document.getElementById('set-goal').value = currentUser.ot_goal;
-            document.getElementById('set-rate').value = currentUser.rate;
-            document.getElementById('settings-screen').classList.remove('hidden');
-        }        
-        function closeSettings() {
-            document.getElementById('settings-screen').classList.add('hidden');
-        }
-        async function saveSettings() {
-            const newName = document.getElementById('set-name').value;
-            const newGoal = document.getElementById('set-goal').value;
-            const newRate = document.getElementById('set-rate').value;
-
-            await db.ref('users/' + currentUser.id).update({
-                display_name: newName,
-                ot_goal: parseFloat(newGoal),
-                rate: parseInt(newRate)
-            });
-
-            currentUser.name = newName;
-            currentUser.rate = parseInt(newRate);
-            currentUser.ot_goal = parseFloat(newGoal);
-
-            document.getElementById('welcome-text').innerText =
-                "Xin chào " + currentUser.name;
-
-            alert("Đã cập nhật!");
-            renderTable();
-            closeSettings();
-        }
-        function openAddManual(dateId = null, time = null) {
-            document.getElementById('manual-screen').classList.remove('hidden');
-
-            if (dateId) {
-                document.getElementById('manual-date').value = dateId;
-                document.getElementById('manual-time').value = time || '';
-            } else {
-                document.getElementById('manual-date').value = '';
-                document.getElementById('manual-time').value = '';
-            }
-        }
-        function closeManual() {
-            document.getElementById('manual-screen').classList.add('hidden');
-        }
-        async function saveManual() {
-            const date = document.getElementById('manual-date').value;
-            const time = document.getElementById('manual-time').value;
-
-            if (!date || !time) {
-                alert("Nhập đủ ngày và giờ");
-                return;
-            }
-
-            const dateId = date; // yyyy-mm-dd
-
-            await db.ref('logs/' + currentUser.id + '/' + dateId).set({
-                time: time,
-                timestamp: new Date(date + 'T' + time).getTime()
-            });
-
-            closeManual();
-        }
-
-
-
-        function renderTable() {
-            const month = viewDate.getMonth(); 
-            const year = viewDate.getFullYear();
-            
-            const startDate = new Date(year, month - 1, 21);
-            const endDate = new Date(year, month, 20);
-            
-            document.getElementById('table-title').innerText = `Tháng ${month + 1}/${year}`;
-        
-            const logs = allLogs || {};
-            const tbody = document.getElementById('ot-body');
-            tbody.innerHTML = '';
-        
-            let totalHours = 0;
-            const daysWithLogs = [];
-        
-            // Lấy các ngày có dữ liệu
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                
-                const dateId = `${y}-${m}-${day}`;
-        
-                if (logs[dateId]) {
-                    const time = logs[dateId].time;
-
-                    daysWithLogs.push({
-                        date: `${day}/${m}/${y}`,
-                        dateId: dateId,
-                        time: time
-                    });
-
-                    totalHours += calculateOT(time);
+                    else if (err.code === 'auth/wrong-password') {
+                        alert("Sai mật khẩu!");
+                    }
+                    else {
+                        alert(err.message);
+                    }
                 }
             }
-        
-            // Chia làm 2 nửa
-            const half = Math.ceil(daysWithLogs.length / 2);
-            const leftSide = daysWithLogs.slice(0, half);
-            const rightSide = daysWithLogs.slice(half);
-        
-            const maxRows = Math.max(leftSide.length, rightSide.length);
-        
-            for (let i = 0; i < maxRows; i++) {
-                const left = leftSide[i];
-                const right = rightSide[i];
-        
-                const row = `
-                    <tr>
-                        <td onclick="${left ? `openAddManual('${left.dateId}','${left.time}')` : ''}">
-                            ${left ? left.date : ''}
-                        </td>
-                        <td style="color:black;font-weight:normal"
-                            onclick="${left ? `openAddManual('${left.dateId}','${left.time}')` : ''}">
-                            ${left ? left.time : ''}
-                        </td>
+            async function onAuthSuccess(firebaseUser) {
+                const uid = firebaseUser.uid;
 
-                        <td onclick="${right ? `openAddManual('${right.dateId}','${right.time}')` : ''}">
-                            ${right ? right.date : ''}
-                        </td>
-                        <td style="color:black;font-weight:normal"
-                            onclick="${right ? `openAddManual('${right.dateId}','${right.time}')` : ''}">
-                            ${right ? right.time : ''}
-                        </td>
+                const snapshot = await db.ref('users/' + uid).once('value');
+                const data = snapshot.val() || {
+                    display_name: generateRandomName(),
+                    ot_goal: 40,
+                    rate: 50000
+                };
 
-                    </tr>
-                `;
-        
-                tbody.innerHTML += row;
-            }
-        
-            updateProgress(totalHours);
-        }
-
-        function calculateMonthlyOT(data) {
-            let total = 0;
-
-            Object.values(data || {}).forEach(day => {
-                total += day.otHours || 0;
-            });
-
-            return total;
-        }
-        function calculateOT(timeStr){
-            const [h,m] = timeStr.split(':').map(Number);
-            let end = h*60+m;
-
-            const start = 17*60+40;
-            const overnightLimit = 8*60+29;
-
-            // Nếu về sau 0h → cộng 24h
-            if(end <= overnightLimit){
-                end += 24*60;
-            }
-
-            if(end <= start) return 0;
-
-            const diff = end - start;
-            const rounded = Math.floor(diff/15)*15;
-
-            return rounded/60;
-        }
-
-
-
-        function logout() {
-            if (!confirm("Bạn có chắc muốn đăng xuất?")) return;
-
-            auth.signOut().then(() => {
-                // reset dữ liệu local
-                currentUser = null;
-                allLogs = {};
+                currentUser = {
+                    id: uid,
+                    name: data.display_name,
+                    ot_goal: data.ot_goal,
+                    rate: data.rate
+                };
+                document.getElementById('welcome-text').innerText = "Xin chào " + currentUser.name;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-screen').classList.remove('hidden');
 
                 if (logsRef) logsRef.off();
 
-                // quay lại màn hình login
-                document.getElementById('main-screen').classList.add('hidden');
-                document.getElementById('settings-screen').classList.add('hidden');
-                document.getElementById('auth-screen').classList.remove('hidden');
-            });
-        }
-        function generateRandomName() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let code = '';
-            for (let i = 0; i < 5; i++) {
-                code += chars[Math.floor(Math.random() * chars.length)];
+                logsRef = db.ref('logs/' + currentUser.id);
+                logsRef.on('value', snapshot => {
+                    allLogs = snapshot.val() || {};
+                    renderTable();
+                });
             }
-            return 'USER-' + code;
-        }
 
-        window.onload = function () {
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    onAuthSuccess(user);
+            // LOGIC
+            async function saveWork() {
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const d = String(now.getDate()).padStart(2, '0');
+
+                const dateId = `${y}-${m}-${d}`;
+                const timeStr = now.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                await db.ref('logs/' + currentUser.id + '/' + dateId).set({
+                    time: timeStr,
+                    timestamp: now.getTime()
+                });
+            }
+
+            function updateProgress(totalHours) {
+                if (!currentUser) return;
+
+                const goal = parseFloat(currentUser.ot_goal) || 40;
+                const percent = Math.min((totalHours / goal) * 100, 100);
+
+                const fill = document.getElementById('progress-fill');
+                const text = document.getElementById('progress-text');
+                const money = document.getElementById('money-label');
+
+                if (fill) fill.style.width = percent + '%';
+                if (text) text.innerText = totalHours.toFixed(1) + "h / " + goal + "h";
+                if (money) money.innerText =
+                    (totalHours * currentUser.rate).toLocaleString() + "¥";
+            }
+
+
+            function showMain() {
+                document.getElementById("cardWrapper").style.transform = "translateX(0)";
+                currentIndex = 0;
+            }
+            function showCalendar() { //slide qua page khac
+                document.getElementById("cardWrapper").style.transform = "translateX(-50%)";
+                currentIndex = 1;
+            }
+            function openConfirm() {
+                document.getElementById("overlay").style.display = "flex";
+            }
+            function confirmEnd() {
+                closeModal();
+                saveWork();
+
+                renderTable();
+                showMain();
+            }
+            function changeMonth(step) {
+                showMain();
+                viewDate.setMonth(viewDate.getMonth() + step);
+                renderTable();
+            }
+            function openSettings() {
+                document.getElementById("setting").style.display = "flex";
+                document.getElementById('set-name').value = currentUser.name;
+                document.getElementById('set-goal').value = currentUser.ot_goal;
+                document.getElementById('set-rate').value = currentUser.rate;
+            }
+            function closeSetting() {
+                document.getElementById("setting").style.display = "none";
+            }
+            async function saveSettings() {
+                const newName = document.getElementById('set-name').value;
+                const newGoal = document.getElementById('set-goal').value;
+                const newRate = document.getElementById('set-rate').value;
+
+                await db.ref('users/' + currentUser.id).update({
+                    display_name: newName,
+                    ot_goal: parseFloat(newGoal),
+                    rate: parseInt(newRate)
+                });
+
+                currentUser.name = newName;
+                currentUser.rate = parseInt(newRate);
+                currentUser.ot_goal = parseFloat(newGoal);
+
+                document.getElementById('welcome-text').innerText =
+                    "Xin chào " + currentUser.name;
+                renderTable();
+
+                updateMonthLabel();
+                showMain();
+            }
+            function openAddManual(dateId = null, time = null) {
+                document.getElementById("add-edit").style.display = "flex";
+
+                if (dateId) {
+                    document.getElementById('manual-date').value = dateId;
+                    document.getElementById('manual-time').value = time || '';
+                } else {
+                    document.getElementById('manual-date').value = '';
+                    document.getElementById('manual-time').value = '';
                 }
-            });
-        };
-    </script>
+            }
+            function closeManual() {
+                document.getElementById("add-edit").style.display = "none";
+            }
+            async function saveManual() {
+                const date = document.getElementById('manual-date').value;
+                const time = document.getElementById('manual-time').value;
+
+                if (!date || !time) {
+                    alert("Nhập đủ ngày và giờ");
+                    return;
+                }
+
+                const dateId = date; // yyyy-mm-dd
+
+                await db.ref('logs/' + currentUser.id + '/' + dateId).set({
+                    time: time,
+                    timestamp: new Date(date + 'T' + time).getTime()
+                });
+                closeManual();
+                renderTable();
+                showMain();
+            }
+            function closeModal() {
+                document.getElementById("overlay").style.display = "none";
+            }
+
+            function renderTable() {
+                const month = viewDate.getMonth();
+                const year = viewDate.getFullYear();
+
+                const startDate = new Date(year, month - 1, 21);
+                const endDate = new Date(year, month, 20);
+
+                document.getElementById('table-title').innerText = `Tháng ${month + 1}/${year}`;
+
+                const logs = allLogs || {};
+                const tbody = document.getElementById('ot-body');
+                tbody.innerHTML = '';
+
+                let totalHours = 0;
+                const daysWithLogs = [];
+
+                // Lấy các ngày có dữ liệu
+                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+
+                    const dateId = `${y}-${m}-${day}`;
+
+                    if (logs[dateId]) {
+                        const time = logs[dateId].time;
+
+                        daysWithLogs.push({
+                            date: `${day}/${m}/${y}`,
+                            dateId: dateId,
+                            time: time
+                        });
+
+                        totalHours += calculateOT(time);
+                    }
+                }
+
+                // Chia làm 2 nửa
+                const half = Math.ceil(daysWithLogs.length / 2);
+                const leftSide = daysWithLogs.slice(0, half);
+                const rightSide = daysWithLogs.slice(half);
+
+                const maxRows = Math.max(leftSide.length, rightSide.length);
+
+                for (let i = 0; i < maxRows; i++) {
+                    const left = leftSide[i];
+                    const right = rightSide[i];
+
+                    const row = `
+                                            <tr>
+                                                <td onclick="${left ? `openAddManual('${left.dateId}','${left.time}')` : ''}">
+                                                    ${left ? left.date : ''}
+                                                </td>
+                                                <td onclick="${left ? `openAddManual('${left.dateId}','${left.time}')` : ''}">
+                                                    ${left ? left.time : ''}
+                                                </td>
+
+                                                <td onclick="${right ? `openAddManual('${right.dateId}','${right.time}')` : ''}">
+                                                    ${right ? right.date : ''}
+                                                </td>
+                                                <td onclick="${right ? `openAddManual('${right.dateId}','${right.time}')` : ''}">
+                                                    ${right ? right.time : ''}
+                                                </td>
+
+                                            </tr>
+                                        `;
+
+                    tbody.innerHTML += row;
+                }
+
+                updateProgress(totalHours);
+            }
+
+            function calculateMonthlyOT(data) {
+                let total = 0;
+
+                Object.values(data || {}).forEach(day => {
+                    total += day.otHours || 0;
+                });
+
+                return total;
+            }
+            function calculateOT(timeStr) {
+                const [h, m] = timeStr.split(':').map(Number);
+                let end = h * 60 + m;
+
+                const start = 17 * 60 + 40;
+                const overnightLimit = 8 * 60 + 29;
+
+                // Nếu về sau 0h → cộng 24h
+                if (end <= overnightLimit) {
+                    end += 24 * 60;
+                }
+
+                if (end <= start) return 0;
+
+                const diff = end - start;
+                const rounded = Math.floor(diff / 15) * 15;
+
+                return rounded / 60;
+            }
+
+
+
+            function logout() {
+                if (!confirm("Bạn có chắc muốn đăng xuất?")) return;
+
+                auth.signOut().then(() => {
+                    // reset dữ liệu local
+                    currentUser = null;
+                    allLogs = {};
+
+                    if (logsRef) logsRef.off();
+
+                    // quay lại màn hình login
+                    document.getElementById('main-screen').classList.add('hidden');
+                    document.getElementById('settings-screen').classList.add('hidden');
+                    document.getElementById('login-screen').classList.remove('hidden');
+                });
+            }
+            function generateRandomName() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let code = '';
+                for (let i = 0; i < 5; i++) {
+                    code += chars[Math.floor(Math.random() * chars.length)];
+                }
+                return 'USER-' + code;
+            }
+
+            window.onload = function () {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        onAuthSuccess(user);
+                    }
+                });
+            };
+        </script>
 </body>
 
 </html>
-
