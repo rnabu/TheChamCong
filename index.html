@@ -716,9 +716,8 @@
                     if (logsRef) logsRef.off();
 
                     // quay lại màn hình login
-                    closeSetting()
+                    document.getElementById("setting").style.display = "none";
                     document.getElementById('main-screen').classList.add('hidden');
-                    document.getElementById('settings-screen').classList.add('hidden');
                     document.getElementById('login-screen').classList.remove('hidden');
                 });
             }
