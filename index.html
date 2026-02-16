@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" ;
-      -webkit-text-size-adjust: 100%;>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,11 +9,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
 
     <style>
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            font-size: 16px;
-            height: 100vh;
+            font-size: 17px;
+            height: 100dvh;
             overflow: hidden;
         }
 
@@ -27,6 +29,9 @@
             margin: 5px 5px 15px 5px;
             font-size: 16px;
         }
+            button:active {
+                transform: scale(0.97);
+            }
 
         .hidden {
             display: none !important;
@@ -35,7 +40,7 @@
         .container {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: 100dvh;
         }
 
         /* Login */
@@ -61,10 +66,12 @@
         }
 
         input {
+            font-size: 16px;
             display: block;
             margin: 10px 0;
             padding: 10px;
-            width: 200px;
+            width: 100%;
+            max-width: 280px;
             font-size: 16px;
         }
 
@@ -101,6 +108,10 @@
             font-weight: bold;
             background: #f2f2f2;
             padding-bottom: 10px;
+
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .main {
@@ -120,18 +131,24 @@
         .card {
             width: 50%;
             height: 100%;
-            padding: 20px;
+            padding: 12px;
             box-sizing: border-box;
         }
         #mainCard{
             padding-top: 0px;
             border: 1px solid #dc3545;
         }
-
-        .table-area table, th, td {
+        .table-area {
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-area table,
+        .table-area th,
+        .table-area td {
             border: 1px solid #ccc;
         }
-        .table-area th, td {
+        .table-area th,
+        .table-area td {
+            height: 42px;
             padding-top: 5px;
             padding-bottom: 3px;
             text-align: center;
@@ -149,6 +166,10 @@
             align-items: center;
             padding: 15px;
             gap: 10px;
+
+            position: sticky;
+            bottom: 0;
+            background: white;
         }
 
         .progress-container {
@@ -274,28 +295,30 @@
             display: flex;
             padding: 15px;
             background: #f2f2f2;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
             .footer button {
                 border: none;
-                font-size: 16px;
+                font-size: 18px;
                 cursor: pointer;
                 border-radius: 25px;
                 margin: 5px;
+                height: 48px;
             }
 
         .small-btn {
-            width: 12%;
+            flex: 1;
             background: #e0e0e0;
         }
 
         .normal-btn {
-            width: 20%;
+            flex: 2;
             background: #c4dc48;
         }
 
         .big-btn {
-            width: 32%;
+            flex: 3;
             background: #ff6666;
             color: white;
             font-weight: normal;
@@ -669,8 +692,6 @@
         function confirmEnd() {
             closeModal();
             saveWork();
-
-            renderTable();
             showMain();
         }
         function changeMonth(step) {
@@ -819,16 +840,6 @@
 
             updateProgress(totalHours);
         }
-
-        function calculateMonthlyOT(data) {
-            let total = 0;
-
-            Object.values(data || {}).forEach(day => {
-                total += day.otHours || 0;
-            });
-
-            return total;
-        }
         function calculateOT(timeStr) {
             const [h, m] = timeStr.split(':').map(Number);
             let end = h * 60 + m;
@@ -924,7 +935,6 @@
                     }
                 });
 
-                // Nếu tới đây tức là đã xác thực thành công
                 const user = auth.currentUser;
 
                 if (user) {
