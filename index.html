@@ -77,6 +77,18 @@
             padding: 8px;
             cursor: pointer;
         }
+        .password-wrap {
+            position: relative;
+        }
+
+        .toggle-pass {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 14px;
+        }
 
         /* mainbody */
         .header {
@@ -296,13 +308,23 @@
             <h4>Đăng nhập</h4>
 
             <input type="email" id="login-email" placeholder="Email" required>
-            <input type="password" id="login-password" placeholder="Mật khẩu" required>
+            <div class="password-wrap">
+                <input type="password" id="login-password" placeholder="Mật khẩu" required>
+                <span class="toggle-pass" onclick="togglePass('login-password', this)">👁</span>
+            </div>
 
             <button class="btn-login" type="submit">Đăng nhập</button>
+            <br>
+            <button class="btn-login" type="button" onclick="biometricLogin()">
+                🔐 Đăng nhập sinh trắc học
+            </button>
 
             <p>
                 Chưa có tài khoản?
-                <a href="#" onclick="showRegister()">Đăng ký</a>
+                <a href="#" onclick="showRegister()" style="text-align: center;">Đăng ký</a>
+            </p>
+            <p>
+                <a href="#" onclick="forgotPassword()" style="text-align: center;">Quên mật khẩu?</a>
             </p>
         </form>
 
@@ -311,8 +333,16 @@
             <h4>Đăng ký</h4>
 
             <input type="email" id="reg-email" placeholder="Email" required>
-            <input type="password" id="reg-password" placeholder="Mật khẩu" required>
-            <input type="password" id="reg-password2" placeholder="Xác nhận mật khẩu" required>
+            <div class="password-wrap">
+                <input type="password" id="reg-password" placeholder="Mật khẩu" required>
+                <span class="toggle-pass" onclick="togglePass('reg-password', this)">👁</span>
+            </div>
+
+            <div class="password-wrap">
+                <input type="password" id="reg-password2" placeholder="Xác nhận mật khẩu" required>
+                <span class="toggle-pass" onclick="togglePass('reg-password2', this)">👁</span>
+            </div>
+
 
             <button class="btn-login" type="submit">Tạo tài khoản</button>
 
@@ -842,6 +872,61 @@
         function closeMsg() {
             document.getElementById('msgBox').style.display = "none";
         }
+        function togglePass(id, el) {
+            const input = document.getElementById(id);
+            if (input.type === "password") {
+                input.type = "text";
+                el.textContent = "◠";
+            } else {
+                input.type = "password";
+                el.textContent = "👁";
+            }
+        }
+        async function forgotPassword() {
+            const email = document.getElementById('login-email').value.trim();
+
+            if (!email) {
+                showAlert("Nhập email trước");
+                return;
+            }
+
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showAlert("Đã gửi email đặt lại mật khẩu");
+            } catch (err) {
+                showAlert("Email không tồn tại hoặc không hợp lệ");
+            }
+        }
+        async function biometricLogin() {
+
+            if (!window.PublicKeyCredential) {
+                showAlert("Thiết bị không hỗ trợ sinh trắc học");
+                return;
+            }
+
+            try {
+                const credential = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: new Uint8Array(32),
+                        timeout: 60000,
+                        userVerification: "required"
+                    }
+                });
+
+                // Nếu tới đây tức là đã xác thực thành công
+                const user = auth.currentUser;
+
+                if (user) {
+                    onAuthSuccess(user);
+                } else {
+                    showAlert("Chưa có phiên đăng nhập trước đó");
+                }
+
+            } catch (err) {
+                showAlert("Xác thực sinh trắc học thất bại");
+            }
+        }
+
         function logout() {
             showConfirm(
                 "Bạn có chắc muốn đăng xuất?",
