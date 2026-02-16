@@ -14,12 +14,38 @@
         }
         body {
             margin: 0;
+            background: #f2f2f2;
             font-family: Arial, sans-serif;
             font-size: 17px;
             height: 100dvh;
-            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+        .app {
+            width: 100%;
+            max-width: 430px; /* chiều ngang iPhone Pro Max */
+            height: 100dvh;
+            margin: 0 auto; /* căn giữa desktop */
+            background: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 18px;
+            overflow: hidden;
 
+            display: flex;
+            flex-direction: column;
+        }
+        @media (max-width: 768px) {
+            body {
+                align-items: stretch;
+            }
+
+            .app {
+                border-radius: 0;
+                box-shadow: none;
+                height: 100dvh;
+            }
+        }
         button {
             border: none;
             height: 40px;
@@ -40,16 +66,17 @@
         .container {
             display: flex;
             flex-direction: column;
-            height: 100dvh;
+            flex: 1;
+            min-height: 0;
         }
 
         /* Login */
         #login-screen {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
         }
 
             #login-screen h4 {
@@ -254,7 +281,7 @@
             flex-direction: column;
         }
 
-        .maincard-content {
+        .mainCard-content {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -327,6 +354,7 @@
 </head>
 
 <body>
+    <div class="app">
     <div id="login-screen">
 
         <!-- LOGIN FORM -->
@@ -986,6 +1014,6 @@
             });
         };
     </script>
+    </div>
 </body>
 </html>
-
