@@ -12,9 +12,10 @@
         html {
             -webkit-text-size-adjust: 100%;
         }
+
         body {
             margin: 0;
-            background: #f2f2f2;
+            background: #cfcfcf;
             font-family: Arial, sans-serif;
             font-size: 17px;
             height: 100dvh;
@@ -22,19 +23,20 @@
             justify-content: center;
             align-items: center;
         }
+
         .app {
             width: 100%;
-            max-width: 430px; /* chiều ngang iPhone Pro Max */
+            max-width: 430px;
             height: 100dvh;
-            margin: 0 auto; /* căn giữa desktop */
+            margin: 0 auto;
             background: white;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
             border-radius: 18px;
             overflow: hidden;
-
             display: flex;
             flex-direction: column;
         }
+
         @media (max-width: 768px) {
             body {
                 align-items: stretch;
@@ -46,6 +48,104 @@
                 height: 100dvh;
             }
         }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+
+            height: 100dvh;
+        }
+
+        .header {
+            flex: 1;
+            display: flex;
+            align-items: end;
+            justify-content: left;
+            padding-left: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #f2f2f2;
+            padding-bottom: 10px;
+            position: sticky;
+            top: 0;
+        }
+
+        .main {
+            flex: 8;
+            position: relative;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        .card-wrapper {
+            display: flex;
+            width: 200%;
+            height: 100%;
+            transition: transform 0.4s ease;
+        }
+
+        .card {
+            width: 50%;
+            height: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+        .card h4 {
+            margin:13px;
+
+        }
+
+        .table-area {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #mainCard {
+            padding-top: 0px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mainCard-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .table-area {
+            flex:1;
+            overflow-y: auto;
+        }
+            .table-area table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+        .progress-area {
+            margin-top: auto;
+
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 15px;
+            gap: 10px;
+        }
+
+        .progress-container {
+            flex: 4;
+        }
+        .footer {
+            flex: 1;
+            display: flex;
+            padding: 15px;
+            background: #f2f2f2;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+
+
+
         button {
             border: none;
             height: 40px;
@@ -55,19 +155,13 @@
             margin: 5px 5px 15px 5px;
             font-size: 16px;
         }
+
             button:active {
                 transform: scale(0.97);
             }
 
         .hidden {
             display: none !important;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-height: 0;
         }
 
         /* Login */
@@ -98,7 +192,7 @@
             margin: 10px 0;
             padding: 10px;
             width: 100%;
-            max-width: 280px;
+            max-width: 200px;
             font-size: 16px;
         }
 
@@ -111,6 +205,7 @@
             padding: 8px;
             cursor: pointer;
         }
+
         .password-wrap {
             position: relative;
         }
@@ -123,86 +218,25 @@
             cursor: pointer;
             font-size: 14px;
         }
+            .table-area table,
+            .table-area th,
+            .table-area td {
+                border: 1px solid #ccc;
+            }
 
-        /* mainbody */
-        .header {
-            flex: 1;
-            display: flex;
-            align-items: end;
-            justify-content: left;
-            padding-left: 20px;
-            font-size: 18px;
-            font-weight: bold;
-            background: #f2f2f2;
-            padding-bottom: 10px;
+            .table-area th,
+            .table-area td {
+                height: 35px;
+                padding-top: 2px;
+                padding-bottom: 1px;
+                text-align: center;
+                font-weight: normal;
+                font-size: 16px;
+            }
 
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .main {
-            flex: 8;
-            position: relative;
-            overflow: hidden;
-            background: #ffffff;
-        }
-
-        .card-wrapper {
-            display: flex;
-            width: 200%;
-            height: 100%;
-            transition: transform 0.4s ease;
-        }
-
-        .card {
-            width: 50%;
-            height: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-        }
-        #mainCard{
-            padding-top: 0px;
-            border: 1px solid #dc3545;
-        }
-        .table-area {
-            -webkit-overflow-scrolling: touch;
-        }
-        .table-area table,
-        .table-area th,
-        .table-area td {
-            border: 1px solid #ccc;
-        }
-        .table-area th,
-        .table-area td {
-            height: 42px;
-            padding-top: 5px;
-            padding-bottom: 3px;
-            text-align: center;
-            font-weight: normal;
-            font-size: 16px;
-        }
-        .table-area th {
-            background: #f2f2f2;
-        }
-        /* Process Line */
-        .progress-area {
-            display: flex;
-            width: 100%;
-            flex-direction: row;
-            align-items: center;
-            padding: 15px;
-            gap: 10px;
-
-            position: sticky;
-            bottom: 0;
-            background: white;
-        }
-
-        .progress-container {
-            flex: 4;
-        }
-
+            .table-area th {
+                background: #f2f2f2;
+            }
         .progress-bar-bg {
             width: 100%;
             background: #eee;
@@ -236,7 +270,6 @@
             font-size: 16px;
             text-align: center;
             align-items: center;
-            padding-right: 16px;
         }
 
 
@@ -276,30 +309,6 @@
                 padding-top: 10px;
             }
 
-        #mainCard {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .mainCard-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .table-area {
-            flex: 9;
-            min-height: 0;
-            overflow-y: auto;
-            display: flex;
-        }
-
-            .table-area table {
-                width: 100%;
-                height: 100%;
-                border-collapse: collapse;
-            }
 
         .input-group {
             margin-bottom: 10px;
@@ -317,13 +326,7 @@
             color: white;
         }
 
-        .footer {
-            flex: 1;
-            display: flex;
-            padding: 15px;
-            background: #f2f2f2;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
+
 
             .footer button {
                 border: none;
@@ -521,6 +524,7 @@
                 <input type="time" id="manual-time">
             </div>
             <div class="btn-section">
+                <button class="btn-Logout" onclick="deleteManual()">Xóa</button>
                 <button class="btn-Save" onclick="saveManual()">Lưu</button>
                 <button onclick="closeManual()">Đóng</button>
             </div>
@@ -792,6 +796,38 @@
             renderTable();
             showMain();
         }
+        async function deleteManual() {
+            const date = document.getElementById('manual-date').value;
+
+            if (!date) {
+                showAlert("Nhập đủ ngày");
+                return;
+            }
+
+            showConfirm(
+                "Bạn có chắc muốn xóa dữ liệu?",
+                async function () {
+
+                    try {
+                        const dateId = date; // yyyy-mm-dd
+
+                        await db.ref('logs/' + currentUser.id + '/' + dateId).remove();
+
+                        closeManual();
+                        showMain();
+
+                        showAlert("Đã xóa thành công");
+
+                    } catch (err) {
+                        console.error(err);
+                        showAlert("Lỗi khi xóa dữ liệu");
+                    }
+                },
+                "Delete",
+                "Cancel"
+            );
+        }
+
         function closeModal() {
             document.getElementById("overlay").style.display = "none";
         }
