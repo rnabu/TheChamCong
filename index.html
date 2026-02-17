@@ -664,22 +664,52 @@
 
         // LOGIC
         async function saveWork() {
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, '0');
-            const d = String(now.getDate()).padStart(2, '0');
 
-            const dateId = `${y}-${m}-${d}`;
-            const timeStr = now.toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            if (!currentUser || !currentUser.id) {
+                showAlert("Chưa đăng nhập");
+                return;
+            }
 
-            await db.ref('logs/' + currentUser.id + '/' + dateId).set({
-                time: timeStr,
-                timestamp: now.getTime()
-            });
+            try {
+                // 1. Lấy offset giữa server và máy người dùng (ms)
+                const offsetSnap = await db.ref('.info/serverTimeOffset').once('value');
+                const serverOffset = offsetSnap.val() || 0;
+
+                // 2. Lấy offset phút bạn tự cấu hình (-2, +5...)
+                const settingSnap = await db.ref('setting/timeOffset').once('value');
+                const timeOffset = settingSnap.val() || 0; // đơn vị: phút
+
+                // 3. Tính giờ server thật
+                const serverNow = new Date(Date.now() + serverOffset);
+
+                // 4. Áp dụng offset phút
+                const adjustedTime = new Date(serverNow.getTime() + timeOffset * 60000);
+
+                const y = adjustedTime.getFullYear();
+                const m = String(adjustedTime.getMonth() + 1).padStart(2, '0');
+                const d = String(adjustedTime.getDate()).padStart(2, '0');
+
+                const dateId = `${y}-${m}-${d}`;
+
+                const timeStr = adjustedTime.toLocaleTimeString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                await db.ref('logs/' + currentUser.id + '/' + dateId).set({
+                    time: timeStr,
+                    timestamp: adjustedTime.getTime(),
+                    serverTimestamp: firebase.database.ServerValue.TIMESTAMP,
+                    offset: timeOffset
+                });
+
+            } catch (err) {
+                console.error(err);
+                showAlert(err);
+            }
         }
+
+
 
         function updateProgress(totalHours) {
             if (!currentUser) return;
