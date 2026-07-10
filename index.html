@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-messaging-compat.js"></script>
 
     <style>
         html {
@@ -491,6 +492,11 @@
                 <h3>Cài đặt</h3>
 
                 <div class="input-group">
+                    <label>Đặt giờ nhắc chấm công:</label><br>
+                    <input type="time" id="set-timer">
+                </div>
+
+                <div class="input-group">
                     <label>Số giờ OT mục tiêu (h):</label><br>
                     <input type="number" id="set-goal" placeholder="Ví dụ: 40">
                 </div>
@@ -561,6 +567,7 @@
             firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
             const auth = firebase.auth();
+            const messaging = firebase.messaging();
 
             let logsRef = null;
             let allLogs = {};
@@ -626,7 +633,9 @@
                     await db.ref('users/' + userCred.user.uid).set({
                         display_name: randomName,
                         ot_goal: 40,
-                        rate: 50000
+                        rate: 50000,
+                        reminderTime: "21:30",
+                        fcmToken: ""
                     });
 
                     // đăng nhập luôn
@@ -655,7 +664,9 @@
                     id: uid,
                     name: data.display_name,
                     ot_goal: data.ot_goal,
-                    rate: data.rate
+                    rate: data.rate,
+                    reminder_time: data.reminder_time || "20:30",
+                    fcmToken: data.fcmToken || ""
                 };
                 document.getElementById('welcome-text').innerText = "Xin chào " + currentUser.name;
                 document.getElementById('login-screen').classList.add('hidden');
@@ -776,6 +787,7 @@
             }
             function openSettings() {
                 document.getElementById("setting").style.display = "flex";
+                document.getElementById('set-timer').value = currentUser.reminder_time || "20:30";
                 document.getElementById('set-name').value = currentUser.name;
                 document.getElementById('set-goal').value = currentUser.ot_goal;
                 document.getElementById('set-rate').value = currentUser.rate;
@@ -813,6 +825,7 @@
             }
 
             async function saveSettings() {
+                const newTimer = document.getElementById('set-timer').value;
                 const newName = document.getElementById('set-name').value;
                 const newGoal = document.getElementById('set-goal').value;
                 const newRate = document.getElementById('set-rate').value;
@@ -822,12 +835,14 @@
                     await db.ref('users/' + currentUser.id).update({
                         display_name: newName,
                         ot_goal: parseFloat(newGoal),
-                        rate: parseInt(newRate)
+                        rate: parseInt(newRate),
+                        reminder_time: newTimer
                     });
 
                     currentUser.name = newName;
                     currentUser.rate = parseInt(newRate);
                     currentUser.ot_goal = parseFloat(newGoal);
+                    currentUser.reminder_time = newTimer;
 
                     document.getElementById('welcome-text').innerText =
                         "Xin chào " + currentUser.name;
@@ -1196,10 +1211,57 @@
                 return Math.floor(diffMin / 15) * 15;
             }
 
+            async function initNotification()
+            {
+                if (!("Notification" in window))
+                {
+                    console.log("Browser not support Notification")
+                    return;
+                }
+                const permission = await Notification.requestPermission();
+                if(permission !== "granted")
+                {
+                    console.log("Notification not allowed")
+                    return;
+                }
+                try{
+                    const token = await messaging.getToken({
+                        vapidKey: "BHz9MzGbnIGdN2W-CqqD4mA6cc6dlSP_B0MAmylwnX5XfECwxUbn1nXC1uRSpGPSwzR8z7F1PhQA4ycUJSnticc"
+                    });
+                    if (!token) {
+
+                        console.log("Cannot get token");
+
+                        return;
+
+                    }
+
+                    if (token === currentUser.fcmToken) {
+
+                        console.log("Token not change");
+
+                        return;
+
+                    }
+
+                    await db.ref("users/" + currentUser.id).update({
+
+                        fcmToken: token
+
+                    });
+
+                    currentUser.fcmToken = token;
+
+                    console.log("FCM Token updated");
+                }
+                catch(err) { console.error(err);}
+            }
+
             window.onload = function () {
-                auth.onAuthStateChanged(user => {
+                auth.onAuthStateChanged(async (user) => {
                     if (user) {
-                        onAuthSuccess(user);
+                        await onAuthSuccess(user);
+                        initNotification();
                     }
                 });
             };
