@@ -1225,8 +1225,10 @@
                     return;
                 }
                 try{
+                    const swRegistration = await navigator.serviceWorker.register("./firebase-messaging-sw.js");
                     const token = await messaging.getToken({
-                        vapidKey: "BHz9MzGbnIGdN2W-CqqD4mA6cc6dlSP_B0MAmylwnX5XfECwxUbn1nXC1uRSpGPSwzR8z7F1PhQA4ycUJSnticc"
+                        vapidKey: "BHz9MzGbnIGdN2W-CqqD4mA6cc6dlSP_B0MAmylwnX5XfECwxUbn1nXC1uRSpGPSwzR8z7F1PhQA4ycUJSnticc",
+                        serviceWorkerRegistration: swRegistration
                     });
                     if (!token) {
 
