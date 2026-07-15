@@ -634,10 +634,10 @@
                         display_name: randomName,
                         ot_goal: 40,
                         rate: 50000,
-                        reminderTime: "21:30",
+                        reminder_time: "19:40",
                         fcmToken: ""
                     });
-
+					await db.ref("scheduledReminders/19:40/"+ userCred.user.uid).set(true);
                     // đăng nhập luôn
                     onAuthSuccess(userCred.user);
 
@@ -665,7 +665,7 @@
                     name: data.display_name,
                     ot_goal: data.ot_goal,
                     rate: data.rate,
-                    reminder_time: data.reminder_time || "20:30",
+                    reminder_time: data.reminder_time || "19:40",
                     fcmToken: data.fcmToken || ""
                 };
                 document.getElementById('welcome-text').innerText = "Xin chào " + currentUser.name;
@@ -787,7 +787,7 @@
             }
             function openSettings() {
                 document.getElementById("setting").style.display = "flex";
-                document.getElementById('set-timer').value = currentUser.reminder_time || "20:30";
+                document.getElementById('set-timer').value = currentUser.reminder_time || "19:40";
                 document.getElementById('set-name').value = currentUser.name;
                 document.getElementById('set-goal').value = currentUser.ot_goal;
                 document.getElementById('set-rate').value = currentUser.rate;
@@ -825,24 +825,27 @@
             }
 
             async function saveSettings() {
-                const newTimer = document.getElementById('set-timer').value;
+                const newReminder = document.getElementById('set-timer').value;
                 const newName = document.getElementById('set-name').value;
                 const newGoal = document.getElementById('set-goal').value;
                 const newRate = document.getElementById('set-rate').value;
 
                 if (validateSetting(newGoal, newRate, newName)) {
-
+					if(currentUser.reminder_time){
+						await db.ref("scheduledReminders/"+currentUser.reminder_time+"/"+currentUser.id).remove();
+					}
                     await db.ref('users/' + currentUser.id).update({
                         display_name: newName,
                         ot_goal: parseFloat(newGoal),
                         rate: parseInt(newRate),
-                        reminder_time: newTimer
+                        reminder_time: newReminder
                     });
-
+					await db.ref("scheduledReminders/"+newReminder+"/"+currentUser.id).set(true);
+					
                     currentUser.name = newName;
                     currentUser.rate = parseInt(newRate);
                     currentUser.ot_goal = parseFloat(newGoal);
-                    currentUser.reminder_time = newTimer;
+                    currentUser.reminder_time = newReminder;
 
                     document.getElementById('welcome-text').innerText =
                         "Xin chào " + currentUser.name;
