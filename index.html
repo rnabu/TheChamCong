@@ -98,6 +98,83 @@
             box-sizing: border-box;
         }
 
+        #calendarCard {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .calendar-grid-area {
+            flex: 4;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+            font-size: 13px;
+            padding-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .calendar-days {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 4px;
+            min-height: 0;
+        }
+
+        .calendar-day {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 14px;
+            position: relative;
+        }
+
+            .calendar-day.empty {
+                visibility: hidden;
+            }
+
+            .calendar-day.today {
+                background: #e8f0fe;
+                font-weight: 700;
+                color: #1a73e8;
+            }
+
+            .calendar-day.has-log::after {
+                content: "";
+                position: absolute;
+                bottom: 4px;
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: #34a853;
+            }
+
+        .calendar-nav-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+            .calendar-nav-area input[type="month"] {
+                font-size: 14px;
+                padding: 4px 8px;
+                border-radius: 6px;
+                border: 1px solid #ddd;
+            }
+
             .card h4 {
                 margin: 13px;
             }
@@ -466,10 +543,19 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- SETTING CARD -->
-                        <div class="card" id="settingCard">
-                            <!--nothing-->
-                            <h3>dang xay dung</h3>
+                        <!-- CALENDAR CARD -->
+                        <div class="card" id="calendarCard">
+                            <div class="calendar-grid-area">
+                                <div class="calendar-weekdays">
+                                    <div>CN</div><div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div>
+                                </div>
+                                <div class="calendar-days" id="calendar-days"></div>
+                            </div>
+                            <div class="calendar-nav-area">
+                                <button class="small-btn" onclick="changeCalendarMonth(-1)">◀</button>
+                                <input type="month" id="calendar-month-select" onchange="onCalendarMonthSelect()">
+                                <button class="small-btn" onclick="changeCalendarMonth(1)">▶</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -481,7 +567,7 @@
                     <button class="small-btn" onclick="changeMonth(-1)">◀</button>
                     <button class="small-btn" onclick="changeMonth(1)">▶</button>
                     <button class="big-btn" onclick="openConfirm()">KẾT THÚC</button>
-                    <button class="normal-btn" onclick="showCalendar()">📅</button>
+                    <button class="normal-btn" onclick="toggleCalendar()">📅</button>
                 </div>
             </div>
         </div>
@@ -574,6 +660,8 @@
 
             let currentUser = null;
             let viewDate = new Date(); // Ngày đang xem trên table
+            let currentIndex = 0; // 0 = mainCard, 1 = calendarCard
+            let calendarViewDate = new Date(); // Tháng đang xem trên lịch
 
             // login/register
             document.getElementById('login-form').addEventListener('submit', async function (e) {
@@ -677,6 +765,7 @@
                 logsRef.on('value', snapshot => {
                     allLogs = snapshot.val() || {};
                     renderTable();
+                    renderCalendar();
                 });
             }
 
@@ -763,6 +852,65 @@
             function showCalendar() { //slide qua page khac
                 document.getElementById("cardWrapper").style.transform = "translateX(-50%)";
                 currentIndex = 1;
+                renderCalendar();
+            }
+
+            function toggleCalendar() {
+                if (currentIndex === 0) {
+                    showCalendar();
+                } else {
+                    showMain();
+                }
+            }
+
+            function changeCalendarMonth(step) {
+                calendarViewDate.setMonth(calendarViewDate.getMonth() + step);
+                renderCalendar();
+            }
+
+            function onCalendarMonthSelect() {
+                const val = document.getElementById('calendar-month-select').value; // "YYYY-MM"
+                if (!val) return;
+                const [y, m] = val.split('-').map(Number);
+                calendarViewDate = new Date(y, m - 1, 1);
+                renderCalendar();
+            }
+
+            function renderCalendar() {
+                const year = calendarViewDate.getFullYear();
+                const month = calendarViewDate.getMonth(); // 0-based
+
+                // Đồng bộ ô chọn tháng
+                const monthInput = document.getElementById('calendar-month-select');
+                if (monthInput) monthInput.value = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const startWeekday = new Date(year, month, 1).getDay(); // 0 = CN
+
+                const now = new Date();
+                const todayId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+                const logs = allLogs || {};
+                const grid = document.getElementById('calendar-days');
+                if (!grid) return;
+                grid.innerHTML = '';
+
+                // Ô trống cho những ngày trước ngày 1 của tháng
+                for (let i = 0; i < startWeekday; i++) {
+                    const empty = document.createElement('div');
+                    empty.className = 'calendar-day empty';
+                    grid.appendChild(empty);
+                }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateId = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const cell = document.createElement('div');
+                    cell.className = 'calendar-day';
+                    if (dateId === todayId) cell.classList.add('today');
+                    if (logs[dateId]) cell.classList.add('has-log');
+                    cell.textContent = d;
+                    grid.appendChild(cell);
+                }
             }
 
             function openConfirm() {
