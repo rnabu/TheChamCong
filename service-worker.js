@@ -31,8 +31,8 @@ event.respondWith(caches.match(event.request).then(response => response || fetch
 });
 
 messaging.onBackgroundMessage(payload => {
-self.registration.showNotification(payload.notification.title,{
-body:payload.notification.body,
+self.registration.showNotification(payload.data.title,{
+body:payload.data.body,
 icon:"icon-192.png"
 });
 });
