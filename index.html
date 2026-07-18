@@ -637,7 +637,6 @@
                         reminder_time: "19:40",
                         fcmToken: ""
                     });
-					await db.ref("scheduledReminders/19:40/"+ userCred.user.uid).set(true);
                     // đăng nhập luôn
                     onAuthSuccess(userCred.user);
 
@@ -824,6 +823,48 @@
                 return true;
             }
 
+            function timeToMinutesClient(time) {
+                const [h, m] = time.split(":").map(Number);
+                return h * 60 + m;
+            }
+
+            // Lấy năm-tháng-ngày và giờ:phút hiện tại theo giờ Tokyo (khớp cách tính bên reminder.js)
+            function getJapanNowClient() {
+                const formatter = new Intl.DateTimeFormat("en-US", {
+                    timeZone: "Asia/Tokyo",
+                    year: "numeric", month: "2-digit", day: "2-digit",
+                    hour: "2-digit", minute: "2-digit", hour12: false
+                });
+                const parts = {};
+                for (const p of formatter.formatToParts(new Date())) {
+                    if (p.type !== "literal") parts[p.type] = p.value;
+                }
+                if (parts.hour === "24") parts.hour = "00";
+                return {
+                    today: `${parts.year}-${parts.month}-${parts.day}`,
+                    currentMinutes: parseInt(parts.hour, 10) * 60 + parseInt(parts.minute, 10)
+                };
+            }
+
+            // Khi user đổi giờ hẹn: nếu hôm nay đã gởi thông báo rồi (sent:true) mà giờ hẹn
+            // mới vẫn còn ở phía trước (chưa tới) -> reset về false để hệ thống gởi lại đúng giờ mới.
+            // Nếu giờ hẹn mới đã ở trong quá khứ (nhỏ hơn/bằng giờ hiện tại) -> giữ true (không gởi lại ngay).
+            async function syncNotifiedReminderOnTimeChange(uid, newReminder) {
+                const { today, currentMinutes } = getJapanNowClient();
+                const newReminderMinutes = timeToMinutesClient(newReminder);
+
+                const nrSnap = await db.ref('users/' + uid + '/notifiedReminders').once('value');
+                const nr = nrSnap.val();
+
+                // Chỉ cần xử lý khi record của hôm nay đang là sent:true
+                if (nr && nr.date === today && nr.sent === true) {
+                    const stillAhead = newReminderMinutes > currentMinutes;
+                    await db.ref('users/' + uid + '/notifiedReminders').update({ sent: !stillAhead });
+                }
+                // Các trường hợp khác (chưa có record, khác ngày, hoặc đang sent:false)
+                // không cần đụng vào gì - lần kiểm tra tiếp theo của reminder.js sẽ tự xử lý đúng.
+            }
+
             async function saveSettings() {
                 const newReminder = document.getElementById('set-timer').value;
                 const newName = document.getElementById('set-name').value;
@@ -831,17 +872,18 @@
                 const newRate = document.getElementById('set-rate').value;
 
                 if (validateSetting(newGoal, newRate, newName)) {
-					if(currentUser.reminder_time){
-						await db.ref("scheduledReminders/"+currentUser.reminder_time+"/"+currentUser.id).remove();
-					}
+
                     await db.ref('users/' + currentUser.id).update({
                         display_name: newName,
                         ot_goal: parseFloat(newGoal),
                         rate: parseInt(newRate),
                         reminder_time: newReminder
                     });
-					await db.ref("scheduledReminders/"+newReminder+"/"+currentUser.id).set(true);
-					
+
+                    if (newReminder !== currentUser.reminder_time) {
+                        await syncNotifiedReminderOnTimeChange(currentUser.id, newReminder);
+                    }
+
                     currentUser.name = newName;
                     currentUser.rate = parseInt(newRate);
                     currentUser.ot_goal = parseFloat(newGoal);
