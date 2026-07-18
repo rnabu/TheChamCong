@@ -122,6 +122,14 @@
             flex-shrink: 0;
         }
 
+            .calendar-weekdays .wd-sun {
+                color: #b71c1c;
+            }
+
+            .calendar-weekdays .wd-sat {
+                color: #1565c0;
+            }
+
         .calendar-days {
             flex: 1;
             display: grid;
@@ -144,23 +152,70 @@
                 visibility: hidden;
             }
 
-            .calendar-day.today {
-                background: #e8f0fe;
+            /* Chủ nhật: chữ đỏ đậm */
+            .calendar-day.sunday {
+                color: #b71c1c;
+            }
+
+            /* Ngày nghỉ thứ 7 của nhóm A: nền xanh lá */
+            .calendar-day.group-a-off {
+                background: #a5d6a7;
+            }
+
+            /* Ngày nghỉ thứ 7 của nhóm B: nền xanh dương */
+            .calendar-day.group-b-off {
+                background: #90caf9;
+            }
+
+            /* Ngày nghỉ hoei: nền cam (ưu tiên hơn nền nhóm A/B) */
+            .calendar-day.hoei-holiday {
+                background: #ffb74d;
+            }
+
+            /* Ngày lễ cố định/振替休日: chữ đỏ tươi, ưu tiên hơn màu chủ nhật */
+            .calendar-day.fixed-holiday {
+                color: #ff1744;
                 font-weight: 700;
-                color: #1a73e8;
+            }
+
+            /* Hôm nay: viền xanh thay vì tô nền, để không đè lên màu ngày nghỉ */
+            .calendar-day.today {
+                box-shadow: inset 0 0 0 2px #1a73e8;
+                font-weight: 700;
             }
 
             .calendar-day.has-log::after {
                 content: "";
                 position: absolute;
-                bottom: 4px;
-                width: 5px;
-                height: 5px;
+                bottom: 3px;
+                width: 6px;
+                height: 6px;
                 border-radius: 50%;
-                background: #34a853;
+                background: #2e7d32;
+                box-shadow: 0 0 0 1.5px #fff;
             }
 
-        .calendar-nav-area {
+        .calendar-info-area {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 2px;
+            padding: 6px 4px;
+        }
+
+            .calendar-info-area div {
+                font-size: 12px;
+                color: #444;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+
+        .card-nav-area {
             flex: 1;
             display: flex;
             align-items: center;
@@ -168,7 +223,7 @@
             gap: 16px;
         }
 
-            .calendar-nav-area input[type="month"] {
+            .card-nav-area input[type="month"] {
                 font-size: 14px;
                 padding: 4px 8px;
                 border-radius: 6px;
@@ -192,7 +247,7 @@
         .mainCard-content {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            flex: 4;
             min-height: 0;
         }
 
@@ -517,7 +572,6 @@
                     <div class="card-wrapper" id="cardWrapper">
                         <!-- MAIN CARD -->
                         <div class="card" id="mainCard">
-                            <h4 id="table-title">abc</h4>
                             <div class="mainCard-content">
                                 <div class="table-area">
                                     <table>
@@ -542,16 +596,25 @@
                                     <div id="money-label">0đ</div>
                                 </div>
                             </div>
+                            <div class="card-nav-area">
+                                <button class="small-btn" onclick="changeMonth(-1)">◀</button>
+                                <h4 id="table-title">abc</h4>
+                                <button class="small-btn" onclick="changeMonth(1)">▶</button>
+                            </div>
                         </div>
                         <!-- CALENDAR CARD -->
                         <div class="card" id="calendarCard">
                             <div class="calendar-grid-area">
                                 <div class="calendar-weekdays">
-                                    <div>CN</div><div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div>
+                                    <div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div class="wd-sat">T7</div><div class="wd-sun">CN</div>
                                 </div>
                                 <div class="calendar-days" id="calendar-days"></div>
                             </div>
-                            <div class="calendar-nav-area">
+                            <div class="calendar-info-area">
+                                <div id="calendar-info-line1"></div>
+                                <div id="calendar-info-line2"></div>
+                            </div>
+                            <div class="card-nav-area">
                                 <button class="small-btn" onclick="changeCalendarMonth(-1)">◀</button>
                                 <input type="month" id="calendar-month-select" onchange="onCalendarMonthSelect()">
                                 <button class="small-btn" onclick="changeCalendarMonth(1)">▶</button>
@@ -564,8 +627,7 @@
                 <div class="footer">
                     <button class="small-btn" onclick="openSettings()">⚙️</button>
                     <button class="small-btn" onclick="openAddManual()">＋</button>
-                    <button class="small-btn" onclick="changeMonth(-1)">◀</button>
-                    <button class="small-btn" onclick="changeMonth(1)">▶</button>
+                    <button class="small-btn" id="console-btn" onclick="openConsole()" style="display:none;">🛠️</button>
                     <button class="big-btn" onclick="openConfirm()">KẾT THÚC</button>
                     <button class="normal-btn" onclick="toggleCalendar()">📅</button>
                 </div>
@@ -596,10 +658,28 @@
                     <label>Tên hiển thị:</label><br>
                     <input type="text" id="set-name" placeholder="Tên của bạn">
                 </div>
+
+                <div class="input-group">
+                    <label>Nhóm nghỉ thứ 7:</label><br>
+                    <select id="set-group">
+                        <option value="A">Nhóm A</option>
+                        <option value="B">Nhóm B</option>
+                    </select>
+                </div>
                 <div class="btn-section">
                     <button class="btn-Logout" onclick="logout()">Logout</button>
                     <button class="btn-Save" onclick="saveSettings()">Lưu</button>
                     <button onclick="closeSetting()">Đóng</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay" id="console" onclick="closeConsole(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <h3>Console</h3>
+                <p>Đang xây dựng...</p>
+                <div class="btn-section">
+                    <button onclick="closeConsole()">Đóng</button>
                 </div>
             </div>
         </div>
@@ -753,11 +833,16 @@
                     ot_goal: data.ot_goal,
                     rate: data.rate,
                     reminder_time: data.reminder_time || "19:40",
-                    fcmToken: data.fcmToken || ""
+                    fcmToken: data.fcmToken || "",
+                    admin: data.admin === true, // chỉ true khi node admin trong database đúng bằng true
+                    group: data.group || "A" // nhóm nghỉ thứ 7: A hoặc B, mặc định A
                 };
                 document.getElementById('welcome-text').innerText = "Xin chào " + currentUser.name;
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-screen').classList.remove('hidden');
+
+                // Nút Console chỉ hiển thị khi user có admin:true trong database
+                document.getElementById('console-btn').style.display = currentUser.admin ? 'inline-block' : 'none';
 
                 if (logsRef) logsRef.off();
 
@@ -863,6 +948,241 @@
                 }
             }
 
+            // ============================================================
+            // DỮ LIỆU NGÀY NGHỈ (nhúng tĩnh từ t7-A.txt / t7-B.txt / hoei_holidays.txt)
+            // Cập nhật thủ công tại đây mỗi khi công ty ra lịch nghỉ thứ 7 / hoei mới.
+            // ============================================================
+            const T7_A_DATES = new Set(["2026-04-04","2026-04-18","2026-05-02","2026-05-16","2026-06-06","2026-06-20","2026-07-04","2026-07-18","2026-08-22","2026-09-05","2026-09-19","2026-10-17","2026-10-31","2026-11-14","2026-11-28","2026-12-19","2027-01-09","2027-01-23","2027-02-13","2027-02-27","2027-03-13","2027-03-27"]);
+            const T7_B_DATES = new Set(["2025-12-13","2026-01-10","2026-01-24","2026-02-14","2026-02-28","2026-03-14","2026-03-28","2026-04-11","2026-04-25","2026-05-09","2026-05-23","2026-06-13","2026-06-27","2026-07-11","2026-08-08","2026-08-29","2026-09-12","2026-09-26","2026-10-10","2026-10-24","2026-11-07","2026-11-21","2026-12-12","2026-12-26","2027-01-16","2027-01-30","2027-02-20","2027-03-06","2027-03-20"]);
+            const HOEI_DATES = new Set(["2025-12-06","2025-12-29","2025-12-30","2025-12-31","2026-01-02","2026-01-03","2026-02-07","2026-05-30","2026-07-25","2026-08-01","2026-08-12","2026-08-13","2026-08-14","2026-08-15","2026-10-03","2026-12-05","2026-12-29","2026-12-30","2026-12-31","2027-01-02","2027-01-04","2027-02-06"]);
+
+            // ============================================================
+            // PORT TỪ JapanHolidayLib.cs (giữ nguyên logic gốc, chỉ đổi cú pháp)
+            // ============================================================
+            function vernalEquinoxDay(year) {
+                if (year <= 1979) {
+                    return Math.floor(20.8357 + 0.242194 * (year - 1980) - Math.floor((year - 1983) / 4));
+                }
+                return Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+            }
+
+            function autumnalEquinoxDay(year) {
+                if (year <= 1979) {
+                    return Math.floor(23.2588 + 0.242194 * (year - 1980) - Math.floor((year - 1983) / 4));
+                }
+                return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+            }
+
+            function addDays(date, n) {
+                const d = new Date(date);
+                d.setDate(d.getDate() + n);
+                return d;
+            }
+
+            function sameDate(a, b) {
+                return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+            }
+
+            // Tên ngày lễ cố định (không tính 振替休日) - tương đương GetHoliday() trong C#
+            function getFixedHolidayName(date) {
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const dow = date.getDay(); // 0=CN...6=T7, khớp DayOfWeek của C#
+
+                if (year < 1948) return "";
+
+                let holiday = "";
+
+                switch (month) {
+                    case 1:
+                        if (day === 1) holiday = "元日";
+                        else if (year >= 2000 && dow === 1 && day >= 8 && day <= 14) holiday = "成人の日";
+                        else if (year < 2000 && day === 15) holiday = "成人の日";
+                        break;
+                    case 2:
+                        if (year >= 2020 && day === 23) holiday = "天皇誕生日";
+                        else if (year >= 1967 && day === 11) holiday = "建国記念日";
+                        break;
+                    case 3:
+                        if (day === vernalEquinoxDay(year)) holiday = "春分の日";
+                        break;
+                    case 4:
+                        if (day === 29) holiday = year >= 2007 ? "昭和の日" : "Greenery Day";
+                        break;
+                    case 5:
+                        if (day === 3) holiday = "憲法記念日";
+                        else if (day === 4) holiday = "みどりの日";
+                        else if (day === 5) holiday = "こどもの日";
+
+                        if (year === 2019) {
+                            if (sameDate(date, new Date(2019, 4, 1))) holiday = "The Enthronement Day";
+                            else if (sameDate(date, new Date(2019, 4, 2))) holiday = "Citizen's Holiday";
+                        }
+                        break;
+                    case 7:
+                        if (year >= 2003 && dow === 1 && day >= 15 && day <= 21) holiday = "海の日";
+                        else if (year >= 1996 && year < 2003 && day === 20) holiday = "海の日";
+                        break;
+                    case 8:
+                        if (year >= 2016 && day === 11) holiday = "山の日";
+                        break;
+                    case 9:
+                        if (day === autumnalEquinoxDay(year)) holiday = "秋分の日";
+                        else if (year >= 2003 && dow === 1 && day >= 15 && day <= 21) holiday = "敬老の日";
+                        else if (year >= 2003 && dow === 2 && day === (autumnalEquinoxDay(year) - 1)) holiday = "国民の休日";
+                        break;
+                    case 10:
+                        if (year >= 2000 && dow === 1 && day >= 8 && day <= 14) holiday = "スポーツの日";
+                        else if (year < 2000 && day === 10) holiday = "スポーツの日";
+                        break;
+                    case 11:
+                        if (day === 3) holiday = "文化の日";
+                        else if (day === 23) holiday = "勤労感謝の日";
+                        break;
+                    case 12:
+                        if (year <= 2018 && day === 23) holiday = "Emperor's Birthday";
+                        break;
+                }
+                return holiday;
+            }
+
+            // Tương đương IsSubstituteHoliday() trong C#
+            function isSubstituteHoliday(date) {
+                if (date < new Date(1973, 3, 12)) return false; // tháng 4 = index 3
+                if (date.getDay() === 0) return false; // Chủ nhật không tính
+
+                let check = addDays(date, -1);
+
+                while (true) {
+                    const h = getFixedHolidayName(check);
+                    if (!h) break;
+
+                    if (check.getDay() === 0) {
+                        if (date < new Date(2007, 0, 1)) {
+                            return date.getDay() === 1; // chỉ áp dụng cho Thứ 2, giai đoạn 1973-2006
+                        }
+                        return true; // 2007+: ngày làm việc gần nhất không phải lễ
+                    }
+                    check = addDays(check, -1);
+                }
+                return false;
+            }
+
+            // Tương đương JpnHolidayName() trong C#
+            function getJapanHolidayName(date) {
+                const name = getFixedHolidayName(date);
+                if (name) return name;
+                if (isSubstituteHoliday(date)) return "振替休日";
+                return "";
+            }
+
+            // ============================================================
+            // PHÂN LOẠI NGÀY NGHỈ CHO 1 NGÀY BẤT KỲ (dùng cho tô màu + tính đếm ngược)
+            // ============================================================
+            function formatDateId(date) {
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            }
+
+            // Trả về thông tin phân loại đầy đủ của 1 ngày (dùng để tô màu ô lịch)
+            function classifyDay(date, group) {
+                const dateId = formatDateId(date);
+                const dow = date.getDay();
+
+                const fixedName = getJapanHolidayName(date);
+                const isHoei = HOEI_DATES.has(dateId);
+                const isGroupOff = (group === 'A' && T7_A_DATES.has(dateId)) || (group === 'B' && T7_B_DATES.has(dateId));
+
+                return {
+                    dateId,
+                    isSunday: dow === 0,
+                    isSaturday: dow === 6,
+                    fixedHolidayName: fixedName, // '' nếu không phải
+                    isHoei,
+                    isGroupOff,
+                    group
+                };
+            }
+
+            // Ngày này có được coi là "ngày nghỉ" không, và tên gọi ưu tiên là gì
+            // (dùng cho 2 dòng đếm ngược ở calendar-info-area)
+            function getDayOffInfo(date, group) {
+                const info = classifyDay(date, group);
+
+                if (info.fixedHolidayName) return { isOff: true, label: info.fixedHolidayName };
+                if (info.isHoei) return { isOff: true, label: "豊栄休日" };
+                if (info.isGroupOff) return { isOff: true, label: "土曜日" };
+                if (info.isSunday) return { isOff: true, label: "日曜日" };
+
+                return { isOff: false, label: "" };
+            }
+
+            // Dòng 1: đếm ngược tới ngày nghỉ gần nhất (tính từ hôm nay, hôm nay off thì = 0)
+            function findNearestHoliday(group) {
+                let d = new Date();
+                d.setHours(0, 0, 0, 0);
+                for (let i = 0; i < 400; i++) {
+                    const info = getDayOffInfo(d, group);
+                    if (info.isOff) return { days: i, label: info.label };
+                    d = addDays(d, 1);
+                }
+                return null;
+            }
+
+            // Dòng 2: đếm ngược tới kỳ nghỉ dài gần nhất (chuỗi >= 3 ngày nghỉ liên tiếp)
+            function findNearestLongHoliday(group) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                // Lùi lại vài ngày để bắt được chuỗi nghỉ đang chạy dở từ trước hôm nay
+                const windowStart = addDays(today, -7);
+                const totalDays = 400;
+                const offFlags = [];
+                for (let i = 0; i < totalDays; i++) {
+                    offFlags.push(getDayOffInfo(addDays(windowStart, i), group).isOff);
+                }
+
+                let i = 0;
+                while (i < totalDays) {
+                    if (!offFlags[i]) { i++; continue; }
+                    let j = i;
+                    while (j < totalDays && offFlags[j]) j++;
+
+                    const runLength = j - i;
+                    const runStart = addDays(windowStart, i);
+                    const runEnd = addDays(windowStart, j - 1);
+
+                    if (runLength >= 3 && runEnd >= today) {
+                        const diffDays = Math.max(0, Math.round((runStart - today) / 86400000));
+                        return { days: diffDays };
+                    }
+                    i = j;
+                }
+                return null;
+            }
+
+            // Cập nhật 2 dòng chữ ở calendar-info-area (luôn tính theo "hôm nay", không phụ thuộc tháng đang xem)
+            function updateCalendarInfo() {
+                const group = (currentUser && currentUser.group) || 'A';
+
+                const nearest = findNearestHoliday(group);
+                const longHoliday = findNearestLongHoliday(group);
+
+                const line1 = document.getElementById('calendar-info-line1');
+                const line2 = document.getElementById('calendar-info-line2');
+
+                if (line1) {
+                    line1.textContent = nearest
+                        ? `Còn ${nearest.days} ngày nữa sẽ đến ngày nghỉ ${nearest.label}`
+                        : '';
+                }
+                if (line2) {
+                    line2.textContent = longHoliday
+                        ? `Còn ${longHoliday.days} ngày nữa sẽ đến kỳ nghỉ dài.`
+                        : '';
+                }
+            }
+
             function changeCalendarMonth(step) {
                 calendarViewDate.setMonth(calendarViewDate.getMonth() + step);
                 renderCalendar();
@@ -879,16 +1199,18 @@
             function renderCalendar() {
                 const year = calendarViewDate.getFullYear();
                 const month = calendarViewDate.getMonth(); // 0-based
+                const group = (currentUser && currentUser.group) || 'A';
 
                 // Đồng bộ ô chọn tháng
                 const monthInput = document.getElementById('calendar-month-select');
                 if (monthInput) monthInput.value = `${year}-${String(month + 1).padStart(2, '0')}`;
 
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const startWeekday = new Date(year, month, 1).getDay(); // 0 = CN
+                const jsWeekday = new Date(year, month, 1).getDay(); // 0 = CN (Chủ nhật) ... 6 = T7
+                const startWeekday = (jsWeekday + 6) % 7; // Quy đổi sang thứ tự T2=0 ... CN=6
 
                 const now = new Date();
-                const todayId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const todayId = formatDateId(now);
 
                 const logs = allLogs || {};
                 const grid = document.getElementById('calendar-days');
@@ -903,14 +1225,38 @@
                 }
 
                 for (let d = 1; d <= daysInMonth; d++) {
-                    const dateId = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const date = new Date(year, month, d);
+                    const info = classifyDay(date, group);
+
                     const cell = document.createElement('div');
-                    cell.className = 'calendar-day';
-                    if (dateId === todayId) cell.classList.add('today');
-                    if (logs[dateId]) cell.classList.add('has-log');
+                    const classes = ['calendar-day'];
+
+                    if (info.dateId === todayId) classes.push('today');
+                    if (logs[info.dateId]) classes.push('has-log');
+
+                    // Màu chữ: Chủ nhật đỏ đậm, ngày lễ cố định đỏ tươi (ưu tiên hơn Chủ nhật)
+                    if (info.isSunday) classes.push('sunday');
+                    if (info.fixedHolidayName) classes.push('fixed-holiday');
+
+                    // Màu nền: hoei (cam) ưu tiên hơn ngày nghỉ thứ 7 theo nhóm (xanh lá/xanh dương)
+                    if (info.isHoei) {
+                        classes.push('hoei-holiday');
+                    } else if (info.isGroupOff) {
+                        classes.push(group === 'A' ? 'group-a-off' : 'group-b-off');
+                    }
+
+                    cell.className = classes.join(' ');
                     cell.textContent = d;
+
+                    if (info.fixedHolidayName || info.isHoei || info.isGroupOff || info.isSunday) {
+                        const label = info.fixedHolidayName || (info.isHoei ? '豊栄休日' : (info.isGroupOff ? '土曜日' : '日曜日'));
+                        cell.title = label;
+                    }
+
                     grid.appendChild(cell);
                 }
+
+                updateCalendarInfo();
             }
 
             function openConfirm() {
@@ -938,9 +1284,23 @@
                 document.getElementById('set-name').value = currentUser.name;
                 document.getElementById('set-goal').value = currentUser.ot_goal;
                 document.getElementById('set-rate').value = currentUser.rate;
+                document.getElementById('set-group').value = currentUser.group || "A";
             }
             function closeSetting() {
                 document.getElementById("setting").style.display = "none";
+            }
+
+            // Chỉ mở được khi currentUser.admin === true (đọc từ node admin trong database).
+            // Đây là lớp chặn phía client — chỉ để ẩn/tránh thao tác nhầm.
+            // Khi bảng này có chức năng thật (đọc/ghi dữ liệu), PHẢI khóa thêm bằng
+            // Firebase Realtime Database Rules, vì client-side check này có thể bị bỏ qua
+            // bởi người rành kỹ thuật (gọi thẳng hàm qua Console trình duyệt).
+            function openConsole() {
+                if (!currentUser || currentUser.admin !== true) return;
+                document.getElementById("console").style.display = "flex";
+            }
+            function closeConsole() {
+                document.getElementById("console").style.display = "none";
             }
             function validateSetting(goal, rate, name) {
                 if (!goal || goal <= 0) {
@@ -1018,6 +1378,7 @@
                 const newName = document.getElementById('set-name').value;
                 const newGoal = document.getElementById('set-goal').value;
                 const newRate = document.getElementById('set-rate').value;
+                const newGroup = document.getElementById('set-group').value;
 
                 if (validateSetting(newGoal, newRate, newName)) {
 
@@ -1025,7 +1386,8 @@
                         display_name: newName,
                         ot_goal: parseFloat(newGoal),
                         rate: parseInt(newRate),
-                        reminder_time: newReminder
+                        reminder_time: newReminder,
+                        group: newGroup
                     });
 
                     if (newReminder !== currentUser.reminder_time) {
@@ -1036,10 +1398,12 @@
                     currentUser.rate = parseInt(newRate);
                     currentUser.ot_goal = parseFloat(newGoal);
                     currentUser.reminder_time = newReminder;
+                    currentUser.group = newGroup;
 
                     document.getElementById('welcome-text').innerText =
                         "Xin chào " + currentUser.name;
                     renderTable();
+                    renderCalendar(); // màu ngày nghỉ thứ 7 phụ thuộc nhóm, cần vẽ lại
 
                     updateMonthLabel();
                     showMain();
@@ -1329,6 +1693,8 @@
 
                             // quay lại màn hình login
                             document.getElementById("setting").style.display = "none";
+                            document.getElementById("console").style.display = "none";
+                            document.getElementById("console-btn").style.display = "none";
                             document.getElementById('main-screen').classList.add('hidden');
                             document.getElementById('login-screen').classList.remove('hidden');
                         });
@@ -1466,15 +1832,6 @@
     <script>
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("service-worker.js");
-
-            let refreshing = false;
-
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!refreshing) {
-                refreshing = true;
-                window.location.reload();
-            }
-            });
         }
     </script>
 </body>
