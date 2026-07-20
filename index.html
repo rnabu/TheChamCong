@@ -666,6 +666,13 @@
                         <option value="B">Nhóm B</option>
                     </select>
                 </div>
+
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="set-badge">
+                        Hiện số giờ tăng ca trên icon app
+                    </label>
+                </div>
                 <div class="btn-section">
                     <button class="btn-Logout" onclick="logout()">Logout</button>
                     <button class="btn-Save" onclick="saveSettings()">Lưu</button>
@@ -835,7 +842,8 @@
                     reminder_time: data.reminder_time || "19:40",
                     fcmToken: data.fcmToken || "",
                     admin: data.admin === true, // chỉ true khi node admin trong database đúng bằng true
-                    group: data.group || "A" // nhóm nghỉ thứ 7: A hoặc B, mặc định A
+                    group: data.group || "A", // nhóm nghỉ thứ 7: A hoặc B, mặc định A
+                    badge_enabled: data.badge_enabled !== false // mặc định BẬT trừ khi user tắt
                 };
                 document.getElementById('welcome-text').innerText = "Xin chào " + currentUser.name;
                 document.getElementById('login-screen').classList.add('hidden');
@@ -917,6 +925,34 @@
                 if (text) text.innerText = totalHours.toFixed(1) + "h / " + goal + "h";
                 if (money) money.innerText =
                     (totalHours * currentUser.rate).toLocaleString() + "¥";
+
+                updateAppBadge(totalHours);
+            }
+
+            // App badge hiển thị đúng số giờ tăng ca đang thấy trên progress bar (đã làm tròn,
+            // vì badge không hỗ trợ số thập phân): >= .5 làm tròn lên, < .5 làm tròn xuống.
+            async function updateAppBadge(totalHours) {
+                if (!("setAppBadge" in navigator)) return;
+
+                // Mặc định BẬT trừ khi user chủ động tắt (badge_enabled === false)
+                const badgeEnabled = !currentUser || currentUser.badge_enabled !== false;
+
+                try {
+                    if (!badgeEnabled) {
+                        await navigator.clearAppBadge();
+                        return;
+                    }
+
+                    const rounded = Math.round(totalHours);
+
+                    if (rounded > 0) {
+                        await navigator.setAppBadge(rounded);
+                    } else {
+                        await navigator.clearAppBadge();
+                    }
+                } catch (err) {
+                    console.error("Không thể cập nhật app badge:", err);
+                }
             }
 
             function showRegister() {
@@ -1264,11 +1300,6 @@
             }
 
             function confirmEnd() {
-                const today = new Date().toISOString().slice(0, 10);
-                localStorage.setItem("endedToday", today);
-
-                navigator.clearAppBadge?.();
-
                 closeModal();
                 saveWork();
                 showMain();
@@ -1285,6 +1316,7 @@
                 document.getElementById('set-goal').value = currentUser.ot_goal;
                 document.getElementById('set-rate').value = currentUser.rate;
                 document.getElementById('set-group').value = currentUser.group || "A";
+                document.getElementById('set-badge').checked = currentUser.badge_enabled !== false;
             }
             function closeSetting() {
                 document.getElementById("setting").style.display = "none";
@@ -1379,6 +1411,7 @@
                 const newGoal = document.getElementById('set-goal').value;
                 const newRate = document.getElementById('set-rate').value;
                 const newGroup = document.getElementById('set-group').value;
+                const newBadgeEnabled = document.getElementById('set-badge').checked;
 
                 if (validateSetting(newGoal, newRate, newName)) {
 
@@ -1387,7 +1420,8 @@
                         ot_goal: parseFloat(newGoal),
                         rate: parseInt(newRate),
                         reminder_time: newReminder,
-                        group: newGroup
+                        group: newGroup,
+                        badge_enabled: newBadgeEnabled
                     });
 
                     if (newReminder !== currentUser.reminder_time) {
@@ -1399,10 +1433,11 @@
                     currentUser.ot_goal = parseFloat(newGoal);
                     currentUser.reminder_time = newReminder;
                     currentUser.group = newGroup;
+                    currentUser.badge_enabled = newBadgeEnabled;
 
                     document.getElementById('welcome-text').innerText =
                         "Xin chào " + currentUser.name;
-                    renderTable();
+                    renderTable(); // renderTable() sẽ tự gọi updateProgress() -> updateAppBadge()
                     renderCalendar(); // màu ngày nghỉ thứ 7 phụ thuộc nhóm, cần vẽ lại
 
                     updateMonthLabel();
@@ -1691,6 +1726,11 @@
 
                             if (logsRef) logsRef.off();
 
+                            // Xóa badge cũ, tránh hiện nhầm số giờ của tài khoản vừa đăng xuất
+                            if ("clearAppBadge" in navigator) {
+                                navigator.clearAppBadge().catch(() => {});
+                            }
+
                             // quay lại màn hình login
                             document.getElementById("setting").style.display = "none";
                             document.getElementById("console").style.display = "none";
@@ -1710,64 +1750,6 @@
                     code += chars[Math.floor(Math.random() * chars.length)];
                 }
                 return 'USER-' + code;
-            }
-            async function updateOTBadge() {
-
-                // Trình duyệt không hỗ trợ badge thì bỏ qua
-                if (!("setAppBadge" in navigator)) return;
-
-                const now = new Date();
-
-                // Nếu đã bấm kết thúc rồi thì không hiện nữa
-                if (hasEndedToday()) {
-                    return;
-                }
-
-                // Nếu trước 8:30 sáng → xoá badge
-                const h = now.getHours();
-                const m = now.getMinutes();
-
-                if (h < 8 || (h === 8 && m < 30)) {
-                    await navigator.clearAppBadge();
-                    return;
-                }
-
-                const mins = getTodayOTMinutes(now);
-
-                if (mins > 0) {
-                    await navigator.setAppBadge(mins); // ví dụ: 30
-                } else {
-                    await navigator.clearAppBadge();
-                }
-            }
-            resetIfNewDay();
-            updateOTBadge();
-
-            // Cập nhật mỗi 1 phút để không bị trễ block 15 phút
-            setInterval(updateOTBadge, 60 * 1000);
-
-            function hasEndedToday() {
-                const today = new Date().toISOString().slice(0, 10);
-                return localStorage.getItem("endedToday") === today;
-            }
-            function resetIfNewDay() {
-                const today = new Date().toISOString().slice(0, 10);
-                const saved = localStorage.getItem("endedToday");
-
-                if (saved && saved !== today) {
-                    localStorage.removeItem("endedToday");
-                }
-            }
-            function getTodayOTMinutes(now = new Date()) {
-                const start = new Date(now);
-                start.setHours(17, 40, 0, 0);
-
-                if (now <= start) return 0;
-
-                const diffMin = Math.floor((now - start) / 60000);
-
-                // làm tròn xuống theo block 15 phút
-                return Math.floor(diffMin / 15) * 15;
             }
 
             async function initNotification()
@@ -1834,10 +1816,10 @@
             navigator.serviceWorker.register("service-worker.js");
             let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!refreshing) {
+        if (!refreshing) {
             refreshing = true;
             window.location.reload();
-          }
+        }
         });
         }
     </script>
