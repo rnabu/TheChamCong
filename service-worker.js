@@ -15,7 +15,7 @@ appId:"1:141017912990:web:79ed5594b2f7ed3e624d8f"
 
 const messaging = firebase.messaging();
 
-const CACHE_NAME = "chamcong-v1.2.2";
+const CACHE_NAME = "chamcong-v1.2.3";
 
 self.addEventListener("install", event => {
 event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(["./","./index.html","./manifest.json","./icon-196.png","./icon-512.png"])));
