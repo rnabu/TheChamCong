@@ -14,7 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-messaging-compat.js"></script>
 
-    <style>
+        <style>
         html {
             -webkit-text-size-adjust: 100%;
         }
@@ -78,7 +78,7 @@
         }
 
         .main {
-            flex: 8;
+            flex: 10;
             position: relative;
             overflow: hidden;
             background: #ffffff;
@@ -102,24 +102,33 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            
         }
 
         .calendar-grid-area {
-            flex: 4;
+            flex: 8;
             display: flex;
             flex-direction: column;
             min-height: 0;
+            margin: 50px 0px 0px 0px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
         }
 
         .calendar-weekdays {
+            flex:1;
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             text-align: center;
-            font-weight: 600;
+            align-items: center;
             color: #666;
-            font-size: 13px;
+            background-color: #f2f2f2;
+            font-size: 16px;
+            padding-top: 6px;
             padding-bottom: 6px;
             flex-shrink: 0;
+            border-bottom: 1px solid #ccc;
+            border-radius: 10px 10px 0 0;
         }
 
             .calendar-weekdays .wd-sun {
@@ -131,7 +140,7 @@
             }
 
         .calendar-days {
-            flex: 1;
+            flex: 7;
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             grid-auto-rows: 1fr;
@@ -143,9 +152,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 16px;
             position: relative;
+
         }
 
             .calendar-day.empty {
@@ -160,11 +170,13 @@
             /* Ngày nghỉ thứ 7 của nhóm A: nền xanh lá */
             .calendar-day.group-a-off {
                 background: #a5d6a7;
+                color: #1565c0;
             }
 
             /* Ngày nghỉ thứ 7 của nhóm B: nền xanh dương */
             .calendar-day.group-b-off {
                 background: #90caf9;
+                color: #1565c0;
             }
 
             /* Ngày nghỉ hoei: nền cam (ưu tiên hơn nền nhóm A/B) */
@@ -196,7 +208,7 @@
             }
 
         .calendar-info-area {
-            flex-shrink: 0;
+            flex: 3;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -207,7 +219,7 @@
         }
 
             .calendar-info-area div {
-                font-size: 12px;
+                font-size: 16px;
                 color: #444;
                 white-space: nowrap;
                 overflow: hidden;
@@ -221,39 +233,46 @@
             align-items: center;
             justify-content: center;
             gap: 16px;
+            padding:0px 10px 0px 10px;
         }
 
             .card-nav-area input[type="month"] {
-                font-size: 14px;
+                font-size: 16px;
                 padding: 4px 8px;
                 border-radius: 6px;
-                border: 1px solid #ddd;
+                border: 1px solid #ccc;
+                width: 100%;
+                max-width: 150px;
+                height: 30px;
             }
 
             .card h4 {
                 margin: 13px;
+                font-size: 16px;
+                text-align: center;
+                width: 100%;
+                max-width: 120px;
             }
-
-        .table-area {
-            -webkit-overflow-scrolling: touch;
-        }
 
         #mainCard {
             padding-top: 0px;
             display: flex;
             flex-direction: column;
+            
         }
 
         .mainCard-content {
             display: flex;
             flex-direction: column;
-            flex: 4;
+            flex: 10;
             min-height: 0;
         }
 
         .table-area {
+            -webkit-overflow-scrolling: touch;
             flex: 1;
             overflow-y: auto;
+            margin: 20px 0px 0px 0px;
         }
 
             .table-area table {
@@ -282,16 +301,13 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-
-
-
         button {
             border: none;
             height: 40px;
             width: 100px;
             cursor: pointer;
             border-radius: 25px;
-            margin: 5px 5px 15px 5px;
+            margin: 5px;
             font-size: 16px;
         }
 
@@ -413,7 +429,6 @@
             align-items: center;
         }
 
-
         .overlay {
             position: fixed;
             top: 0;
@@ -436,7 +451,7 @@
             background: white;
             padding: 10px;
             border-radius: 25px;
-            width: 280px;
+            width: 320px;
             text-align: center;
         }
 
@@ -452,11 +467,86 @@
 
 
         .input-group {
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-align: left;
-            padding-left: 25px;
+            padding-left: 10px;
+            padding-right: 15px;
+
+            justify-content: space-between;
+            gap: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .input-group input {
+            padding: 6px 10px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 150px;
+        }
+        .input-group-dropbox {
+            margin-bottom: 5px;
+            text-align: left;
+            padding: 10px 15px 10px 10px;
+
+            justify-content: space-between;
+            gap: 15px;
+            display:flex;
+            align-items: center;
         }
 
+        .input-group-dropbox select {
+            padding: 6px 10px;
+            font-size: 16px;
+            width:100%;
+            max-width: 175px;
+        }
+
+        .input-group-checkbox {
+            margin-bottom: 5px;
+            text-align: left;
+            padding: 10px 15px 10px 10px;
+
+            justify-content: space-between;
+            gap: 15px;
+            display:flex;
+            align-items: center;
+        }
+
+        .input-group-checkbox input[type="checkbox"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+
+            width: 30px;
+            height: 30px;
+            border: 1px solid #555;
+            border-radius: 50%;
+            background-color: white;
+            cursor: pointer;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        /* checked */
+        .input-group-checkbox input[type="checkbox"]:checked {
+            background-color: #007bff;
+            border-color: #007bff;
+            position: relative;
+        }
+
+        /* tick */
+        .input-group-checkbox input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            top: 7px;
+            left: 7px;
+            width: 10px;
+            height: 10px;
+            border: solid white;
+            border-width: 2px;
+            transform: rotate(45deg);
+            border-radius: 50%;
+        }
         .btn-Logout {
             background: #dc3545;
             color: white;
@@ -659,20 +749,19 @@
                     <input type="text" id="set-name" placeholder="Tên của bạn">
                 </div>
 
-                <div class="input-group">
-                    <label>Nhóm nghỉ thứ 7:</label><br>
+                <div class="input-group-dropbox">
+                    <label>Nhóm nghỉ thứ 7:</label>
                     <select id="set-group">
                         <option value="A">Nhóm A</option>
                         <option value="B">Nhóm B</option>
                     </select>
                 </div>
 
-                <div class="input-group">
-                    <label>
-                        <input type="checkbox" id="set-badge">
-                        Hiện số giờ tăng ca trên icon app
-                    </label>
+                <div class="input-group-checkbox">
+                    <label>Hiện giờ tăng ca trên icon</label>
+                    <input type="checkbox" id="set-badge">
                 </div>
+                
                 <div class="btn-section">
                     <button class="btn-Logout" onclick="logout()">Logout</button>
                     <button class="btn-Save" onclick="saveSettings()">Lưu</button>
